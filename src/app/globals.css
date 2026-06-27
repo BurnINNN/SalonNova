@@ -1,27 +1,113 @@
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  
+  /* Glassmorphism utils */
+  .glass {
+    @apply bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-stone-200 dark:border-slate-700 shadow-md;
+  }
+  .glass-card {
+    @apply bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-2 border-stone-200/80 dark:border-stone-800 shadow-md transition-all duration-300 hover:shadow-lg hover:border-primary/50 dark:hover:border-primary/50;
+  }
+}
+
+@layer base {
+  :root {
+    /* Beige & White Luxury Theme - Light */
+    --background: 40 33% 98%;      /* Very light warm beige/white */
+    --foreground: 20 14% 20%;      /* Dark charcoal brown for text */
+    
+    --card: 0 0% 100%;             /* Pure white for cards */
+    --card-foreground: 20 14% 20%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 14% 20%;
+    
+    --primary: 32 40% 50%;         /* Warm gold/caramel beige for primary actions */
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 40 20% 93%;       /* Soft beige for secondary elements */
+    --secondary-foreground: 20 14% 20%;
+    
+    --muted: 40 20% 93%;
+    --muted-foreground: 25 10% 45%;
+    
+    --accent: 32 40% 50%;          /* Same as primary for accents */
+    --accent-foreground: 0 0% 100%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 40 15% 90%;          /* Soft beige border */
+    --input: 40 15% 90%;
+    --ring: 32 40% 50%;            /* Caramel ring */
+    
+    --radius: 0.75rem;             /* Slightly rounder for premium feel */
+
+    --sidebar-background: 40 33% 98%;
+    --sidebar-foreground: 20 14% 20%;
+    --sidebar-primary: 32 40% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 40 20% 93%;
+    --sidebar-accent-foreground: 20 14% 20%;
+    --sidebar-border: 40 15% 90%;
+    --sidebar-ring: 32 40% 50%;
+  }
+  
+  .dark {
+    /* Dark mode - Deep Charcoal with Warm Accents */
+    --background: 20 10% 10%;      /* Very dark warm gray/charcoal */
+    --foreground: 40 20% 90%;      /* Off-white warm text */
+    
+    --card: 20 10% 12%;            /* Slightly lighter charcoal */
+    --card-foreground: 40 20% 90%;
+    
+    --popover: 20 10% 12%;
+    --popover-foreground: 40 20% 90%;
+    
+    --primary: 32 40% 50%;         /* Warm gold/caramel beige */
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 20 10% 16%;
+    --secondary-foreground: 40 20% 90%;
+    
+    --muted: 20 10% 16%;
+    --muted-foreground: 40 10% 60%;
+    
+    --accent: 32 40% 50%;
+    --accent-foreground: 0 0% 100%;
+    
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 40 20% 90%;
+    
+    --border: 20 10% 18%;
+    --input: 20 10% 18%;
+    --ring: 32 40% 50%;
+
+    --sidebar-background: 20 10% 10%;
+    --sidebar-foreground: 40 20% 90%;
+    --sidebar-primary: 32 40% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 20 10% 16%;
+    --sidebar-accent-foreground: 40 20% 90%;
+    --sidebar-border: 20 10% 18%;
+    --sidebar-ring: 32 40% 50%;
+  }
+
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
   }
 }

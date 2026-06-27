@@ -1,0 +1,590 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================================
+// MULTI-TENANT ROOT
+// ============================================================
+model Salon {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  settings  Json     @default("{}")
+  // settings contient : { currency: "MAD", timezone: "Africa/Casablanca", llmProvider: "anthropic" | "openai", whatsappPhoneNumberId: string, instagramPageId: string, messengerPageId: string }
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  employees            Employee[]
+  services             Service[]
+  clients              Client[]
+  appointments         Appointment[]
+  conversations        Conversation[]
+  products             Product[]
+  serviceCategories    ServiceCategory[]
+  inventorySessions    InventorySession[]
+  transactions         Transaction[]
+  cashRegisterSessions CashRegisterSession[]
+  indirectCharges      IndirectCharge[]
+  integrations         Integration[]
+  automations          Automation[]
+
+  @@map("salons")
+}
+
+// ============================================================
+// EMPLOYEES
+// ============================================================
+model Employee {
+  id        String       @id @default(cuid())
+  name      String
+  email          String?       @unique
+  phone          String?
+  color          String?
+  salaryType     EmployeeSalaryType @default(COMMISSION)
+  baseSalary     Float?
+  commissionRate Float?
+  role           EmployeeRole @default(HAIRDRESSER)
+  userId    String?      @unique // lié au compte Supabase Auth
+  salonId   String
+  salon     Salon        @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  appointments Appointment[]
+  transactions Transaction[]
+
+  @@index([salonId])
+  @@map("employees")
+}
+
+enum EmployeeRole {
+  MANAGER
+  HAIRDRESSER
+}
+
+enum EmployeeSalaryType {
+  FIXED
+  COMMISSION
+  BOTH
+}
+
+// ============================================================
+// SERVICES (catalogue des prestations)
+// ============================================================
+model Service {
+  id          String   @id @default(cuid())
+  name        String
+  duration      Int      // en minutes
+  bufferMinutes Int      @default(0)
+  price         Float    // en MAD
+  color         String?
+  description   String?
+  categoryId  String?
+  category    ServiceCategory? @relation(fields: [categoryId], references: [id])
+  isActive      Boolean  @default(true)
+  salonId     String
+  salon       Salon    @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  appointments     Appointment[]
+  serviceProducts  ServiceProduct[]
+  transactionLines TransactionLine[]
+
+  @@index([salonId])
+  @@map("services")
+}
+
+// ============================================================
+// SERVICE CATEGORIES
+// ============================================================
+model ServiceCategory {
+  id          String    @id @default(cuid())
+  name        String
+  color       String?   @default("#000000")
+  order       Int       @default(0)
+  salonId     String
+  salon       Salon     @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  services    Service[]
+
+  @@index([salonId])
+  @@map("service_categories")
+}
+
+// ============================================================
+// CLIENTS (CRM)
+// ============================================================
+model Client {
+  id             String   @id @default(cuid())
+  firstName      String
+  lastName       String
+  phone          String?
+  // Identifiants canaux Meta (PSID pour Messenger/Instagram, phone for WhatsApp)
+  whatsappId     String?
+  instagramId    String?
+  messengerId    String?
+  technicalNotes String?  // fiches techniques (ex: formule coloration)
+  notes          String?  // notes libres
+  whatsappOptOut Boolean @default(false)
+  salonId        String
+  salon          Salon    @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  appointments  Appointment[]
+  conversations Conversation[]
+  hairProfile   HairProfile?
+  transactions  Transaction[]
+
+  @@unique([whatsappId, salonId])
+  @@unique([instagramId, salonId])
+  @@unique([messengerId, salonId])
+  @@index([salonId])
+  @@map("clients")
+}
+
+// ============================================================
+// APPOINTMENTS
+// ============================================================
+model Appointment {
+  id         String            @id @default(cuid())
+  startTime           DateTime
+  endTime             DateTime
+  actualDuration      Int?
+  closedAt            DateTime?
+  clientArrivalTime   DateTime?
+  clientDelayMinutes  Int?
+  overrunMinutes      Int?
+  cascadeSourceId     String?
+  cascadeDelayMinutes Int?
+  status              AppointmentStatus @default(SCHEDULED)
+  notes      String?
+  bookedVia  BookingChannel    @default(MANUAL) // savoir si l'IA ou le gérant a réservé
+  salonId    String
+  salon      Salon             @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  clientId   String
+  client     Client            @relation(fields: [clientId], references: [id])
+  employeeId String
+  employee   Employee          @relation(fields: [employeeId], references: [id])
+  serviceId  String
+  service    Service           @relation(fields: [serviceId], references: [id])
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  stockMovements StockMovement[]
+  transaction    Transaction?
+
+  @@index([salonId])
+  @@index([employeeId, startTime])
+  @@index([status])
+  @@map("appointments")
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  NO_SHOW
+  CANCELLED
+}
+
+enum BookingChannel {
+  MANUAL
+  AI_AGENT
+  WHATSAPP
+  INSTAGRAM
+  MESSENGER
+}
+
+// ============================================================
+// CONVERSATIONS & MESSAGES (omnicanal)
+// ============================================================
+model Conversation {
+  id            String             @id @default(cuid())
+  channel       MessageChannel
+  externalId    String             // ID de la conversation côté Meta
+  status        ConversationStatus @default(BOT)
+  salonId       String
+  salon         Salon              @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  clientId      String?
+  client        Client?            @relation(fields: [clientId], references: [id])
+  // Contexte IA : historique des messages envoyés au LLM
+  aiContext     Json               @default("[]")
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  messages Message[]
+
+  @@unique([externalId, channel])
+  @@index([salonId])
+  @@index([status])
+  @@map("conversations")
+}
+
+enum ConversationStatus {
+  BOT          // L'IA gère la conversation
+  HUMAN        // Un humain a pris le relais
+  RESOLVED     // Conversation terminée
+}
+
+enum MessageChannel {
+  WHATSAPP
+  INSTAGRAM
+  MESSENGER
+}
+
+model Message {
+  id             String      @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  content        String
+  role           MessageRole
+  externalId     String?     // ID du message côté Meta
+  createdAt      DateTime    @default(now())
+
+  @@index([conversationId])
+  @@map("messages")
+}
+
+enum MessageRole {
+  USER       // message du client
+  ASSISTANT  // message de l'IA ou du gérant
+  SYSTEM     // message système interne
+}
+
+// ============================================================
+// STOCK — PRODUITS
+// ============================================================
+model Product {
+  id              String          @id @default(cuid())
+  name            String
+  brand           String?
+  reference       String?                     // référence fabricant
+  description     String?
+  category        ProductCategory
+  unit            String                      // unité libre : "flacon", "kg", "tube 60ml"…
+  currentStock    Float           @default(0)
+  minStock        Float           @default(1) // seuil alerte BAS
+  purchasePrice   Float           @default(0) // CUMP — mis à jour à chaque entrée
+  sellingPrice    Float?                      // prix revente client (optionnel)
+  isActive        Boolean         @default(true)
+  salonId         String
+  salon           Salon           @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  stockMovements   StockMovement[]
+  serviceProducts  ServiceProduct[]
+  inventoryLines   InventorySessionLine[]
+  transactionLines TransactionLine[]
+
+  @@index([salonId])
+  @@index([salonId, category])
+  @@index([salonId, isActive])
+  @@map("products")
+}
+
+enum ProductCategory {
+  COLORANT      // colorations, oxydants, décolorants
+  SOIN          // masques, huiles, soins traitants
+  COIFFANT      // gels, laques, mousses, cires
+  SHAMPOING     // shampoings, après-shampoings
+  OUTIL         // consommables : gants, aluminium, brosses jetables
+  REVENTE       // produits vendus au détail aux clients
+  AUTRE         // tout ce qui ne rentre pas dans les autres catégories
+}
+
+// ============================================================
+// STOCK — MOUVEMENTS (traçabilité complète)
+// ============================================================
+model StockMovement {
+  id                 String       @id @default(cuid())
+  type               MovementType
+  quantity           Float        // toujours positif — le sens est donné par le type
+  quantityBefore     Float        // stock avant le mouvement (traçabilité)
+  quantityAfter      Float        // stock après le mouvement (traçabilité)
+  unitCost           Float?       // coût unitaire au moment du mouvement (pour CUMP)
+  cumpBefore         Float?       // CUMP avant le mouvement
+  cumpAfter          Float?       // CUMP après le mouvement
+  reason             String?      // note libre du gérant
+  productId          String
+  product            Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  appointmentId      String?      // si consommation liée à un RDV
+  appointment        Appointment? @relation(fields: [appointmentId], references: [id])
+  inventorySessionId String?      // si ajustement lors d'un inventaire physique
+  inventorySession   InventorySession? @relation(fields: [inventorySessionId], references: [id])
+  createdById        String?      // userId de l'employé
+  salonId            String
+  createdAt          DateTime     @default(now())
+
+  @@index([salonId])
+  @@index([productId])
+  @@index([productId, createdAt])
+  @@index([type])
+  @@map("stock_movements")
+}
+
+enum MovementType {
+  ENTREE        // achat manuel
+  SORTIE        // consommation prestation, perte, casse
+  INVENTAIRE    // remise à niveau lors d'un inventaire physique
+  RETOUR        // retour (soustrait du stock)
+  AJUSTEMENT    // correction manuelle avec justification
+}
+
+// ============================================================
+// SESSIONS D'INVENTAIRE PHYSIQUE
+// ============================================================
+model InventorySession {
+  id          String                @id @default(cuid())
+  status      InventoryStatus       @default(IN_PROGRESS)
+  startedAt   DateTime              @default(now())
+  closedAt    DateTime?
+  notes       String?
+  startedById String?               // userId du gérant
+  salonId     String
+  salon       Salon                 @relation(fields: [salonId], references: [id], onDelete: Cascade)
+
+  lines       InventorySessionLine[]
+  movements   StockMovement[]
+
+  @@index([salonId])
+  @@index([salonId, status])
+  @@map("inventory_sessions")
+}
+
+enum InventoryStatus {
+  IN_PROGRESS // inventaire en cours — le gérant saisit les quantités
+  CLOSED      // inventaire validé — ajustements appliqués au stock
+  CANCELLED   // inventaire annulé sans application
+}
+
+model InventorySessionLine {
+  id                 String           @id @default(cuid())
+  expectedQty        Float            // stock théorique avant inventaire
+  countedQty         Float?           // quantité comptée par le gérant (null = pas encore saisie)
+  difference         Float?           // countedQty - expectedQty (calculé à la validation)
+  productId          String
+  product            Product          @relation(fields: [productId], references: [id])
+  inventorySessionId String
+  inventorySession   InventorySession @relation(fields: [inventorySessionId], references: [id], onDelete: Cascade)
+
+  @@unique([inventorySessionId, productId])
+  @@index([inventorySessionId])
+  @@map("inventory_session_lines")
+}
+
+// ============================================================
+// LIEN PRESTATION ↔ PRODUITS CONSOMMÉS (consommation auto)
+// ============================================================
+model ServiceProduct {
+  id              String  @id @default(cuid())
+  quantity        Float                     // quantité consommée par défaut pour cette prestation
+  productId       String
+  product         Product @relation(fields: [productId], references: [id])
+  serviceId       String
+  service         Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([serviceId, productId])
+  @@map("service_products")
+}
+
+// ============================================================
+// CRM — EXTENSION CLIENT
+// ============================================================
+model HairProfile {
+  id              String   @id @default(cuid())
+  clientId        String   @unique
+  client          Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  hairType        String?  // ex: "Frisés", "Lisses", "Ondulés", "Crépus"
+  hairCondition   String?  // ex: "Abîmés", "Normaux", "Colorés"
+  colorFormula    String?  // formule de coloration habituelle (texte libre ou JSON)
+  sensitiveScalp  Boolean  @default(false)
+  allergies       String?  // allergies ou contre-indications
+  preferredStyle  String?
+  lastColorDate   DateTime?
+  notes           String?  // notes techniques libres
+  updatedAt       DateTime @updatedAt
+
+  @@map("hair_profiles")
+}
+
+// ============================================================
+// POS & CAISSE (Nouveau module)
+// ============================================================
+
+enum PaymentMethod {
+  CASH
+  CARD
+}
+
+model Transaction {
+  id              String         @id @default(cuid())
+  totalAmount     Float
+  amountPaid      Float
+  changeGiven     Float          @default(0)
+  paymentMethod   PaymentMethod
+  discount        Float          @default(0)
+  discountReason  String?
+  cancelledAt     DateTime?
+  cancelReason    String?
+  salonId         String
+  salon           Salon          @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  clientId        String?
+  client          Client?        @relation(fields: [clientId], references: [id])
+  employeeId      String?
+  employee        Employee?      @relation(fields: [employeeId], references: [id])
+  appointmentId   String?        @unique
+  appointment     Appointment?   @relation(fields: [appointmentId], references: [id])
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  lines           TransactionLine[]
+
+  @@index([salonId])
+  @@index([salonId, createdAt])
+  @@map("transactions")
+}
+
+model TransactionLine {
+  id              String         @id @default(cuid())
+  label           String
+  quantity        Float
+  unitPrice       Float
+  totalPrice      Float
+  transactionId   String
+  transaction     Transaction    @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  serviceId       String?
+  service         Service?       @relation(fields: [serviceId], references: [id])
+  productId       String?
+  product         Product?       @relation(fields: [productId], references: [id])
+
+  @@index([transactionId])
+  @@map("transaction_lines")
+}
+
+model CashRegisterSession {
+  id              String         @id @default(cuid())
+  openedAt        DateTime       @default(now())
+  closedAt        DateTime?
+  openingBalance  Float
+  closingBalance  Float?
+  physicalBalance Float?
+  discrepancy     Float?
+  salonId         String
+  salon           Salon          @relation(fields: [salonId], references: [id], onDelete: Cascade)
+
+  @@index([salonId])
+  @@index([salonId, openedAt])
+  @@map("cash_register_sessions")
+}
+
+// ============================================================
+// CHARGES INDIRECTES (Loyer, Salaires, etc.)
+// ============================================================
+model IndirectCharge {
+  id          String   @id @default(cuid())
+  name          String
+  description   String?
+  amount        Float
+  paymentMethod PaymentMethod?
+  date          DateTime
+  salonId     String
+  salon       Salon    @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@index([salonId])
+  @@index([salonId, date])
+  @@map("indirect_charges")
+}
+
+// ============================================================
+// META OAUTH & AUTOMATISATIONS IA
+// ============================================================
+
+model Integration {
+  id                String          @id @default(cuid())
+  salonId           String
+  salon             Salon           @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  platform          PlatformType
+  
+  metaPageId        String?         @unique
+  whatsappValueId   String?         @unique
+  phoneNumberId     String?         @unique
+  
+  permanentToken    String          @db.Text
+  isActive          Boolean         @default(true)
+  expiresAt         DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([metaPageId])
+  @@index([whatsappValueId])
+  @@index([phoneNumberId])
+  @@index([salonId])
+  @@map("integrations")
+}
+
+enum PlatformType {
+  MESSENGER
+  INSTAGRAM
+  WHATSAPP
+}
+
+model Automation {
+  id          String    @id @default(cuid())
+  salonId     String
+  salon       Salon     @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  name        String    @default("Automation Sans Nom")
+  isActive    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  triggers    Trigger[]
+  listeners   Listener[]
+
+  @@index([salonId])
+  @@map("automations")
+}
+
+model Trigger {
+  id           String      @id @default(cuid())
+  automationId String
+  automation   Automation  @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  type         TriggerType
+  keyword      String
+
+  @@index([automationId])
+  @@map("triggers")
+}
+
+enum TriggerType {
+  COMMENT
+  DM
+}
+
+model Listener {
+  id           String       @id @default(cuid())
+  automationId String
+  automation   Automation   @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  type         ListenerType @default(MESSAGE)
+  prompt       String       @db.Text
+  replyComment String?
+
+  @@index([automationId])
+  @@map("listeners")
+}
+
+enum ListenerType {
+  MESSAGE
+  SMART_AI
+}

@@ -1,0 +1,126 @@
+'use client'
+
+import { useState } from 'react'
+import { CalendarView } from '@/components/agenda/CalendarView'
+import { NewAppointmentDialog } from '@/components/agenda/NewAppointmentDialog'
+import { AppointmentDetailsModal } from '@/components/agenda/AppointmentDetailsModal'
+
+interface Client {
+  id: string
+  firstName: string
+  lastName: string
+}
+
+interface Employee {
+  id: string
+  name: string
+}
+
+interface Service {
+  id: string
+  name: string
+  duration: number
+  price: number
+}
+
+interface CalendarEvent {
+  id: string
+  title: string
+  start: string
+  end: string
+  backgroundColor?: string
+  extendedProps?: any
+}
+
+interface AgendaClientProps {
+  appointments: CalendarEvent[]
+  clients: Client[]
+  employees: Employee[]
+  services: Service[]
+  salonId: string
+}
+
+export function AgendaClient({
+  appointments,
+  clients,
+  employees,
+  services,
+  salonId,
+}: AgendaClientProps) {
+  const [isNewDialogOpen, setIsNewDialogOpen] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  
+  const [selectedAppointment, setSelectedAppointment] = useState<any | null>(null)
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
+
+  const [selectedEmployee, setSelectedEmployee] = useState<string>('ALL')
+
+  function handleDateClick(date: Date) {
+    setSelectedDate(date)
+    setIsNewDialogOpen(true)
+  }
+
+  function handleEventClick(appointmentId: string) {
+    const apt = appointments.find(a => a.id === appointmentId)
+    if (apt) {
+      setSelectedAppointment(apt)
+      setIsDetailsModalOpen(true)
+    }
+  }
+
+  const filteredAppointments = selectedEmployee === 'ALL' 
+    ? appointments 
+    : appointments.filter(a => a.extendedProps?.employeeId === selectedEmployee)
+
+  return (
+    <div className="h-full flex flex-col pb-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Agenda Intelligent</h1>
+          <select 
+            className="bg-background border border-border rounded-xl px-3 py-1.5 text-sm font-medium focus:ring-ring outline-none"
+            value={selectedEmployee}
+            onChange={(e) => setSelectedEmployee(e.target.value)}
+          >
+            <option value="ALL">Tous les coiffeurs</option>
+            {employees.map(emp => (
+              <option key={emp.id} value={emp.id}>{emp.name}</option>
+            ))}
+          </select>
+        </div>
+        <button
+          onClick={() => {
+            setSelectedDate(new Date())
+            setIsNewDialogOpen(true)
+          }}
+          className="bg-primary text-primary-foreground px-4 py-2 rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
+        >
+          + Nouveau Rendez-vous
+        </button>
+      </div>
+      <div className="flex-1 min-h-[600px]">
+        <CalendarView
+          appointments={filteredAppointments}
+          onDateClick={handleDateClick}
+          onEventClick={handleEventClick}
+        />
+      </div>
+
+      <NewAppointmentDialog
+        open={isNewDialogOpen}
+        onOpenChange={setIsNewDialogOpen}
+        clients={clients}
+        employees={employees}
+        services={services}
+        salonId={salonId}
+        initialDate={selectedDate}
+      />
+
+      <AppointmentDetailsModal 
+        isOpen={isDetailsModalOpen}
+        onClose={() => setIsDetailsModalOpen(false)}
+        appointment={selectedAppointment}
+      />
+    </div>
+  )
+}
