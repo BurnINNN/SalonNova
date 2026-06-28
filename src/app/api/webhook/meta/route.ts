@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { verifyMetaSignature } from '@/lib/meta/verify'
 import { processMetaEvent } from '@/lib/meta/processor'
 
+export const dynamic = 'force-dynamic'
+
 // GET : vérification du webhook par Meta lors de la configuration
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)

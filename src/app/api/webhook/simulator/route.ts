@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { processMetaEvent } from '@/lib/meta/processor'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * SIMULATEUR DE WEBHOOK META
  * 
