@@ -1,13 +1,40 @@
-import { Anthropic } from '@anthropic-ai/sdk'
-import OpenAI from 'openai'
+// Imports statiques uniquement pour les dépendances qui ne valident pas les clés API à l'import
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { prisma } from '@/lib/prisma'
 import { getSystemPrompt } from './prompts'
 import { getOpenAITools, getAnthropicTools, getGeminiTools, executeToolCall } from './tools'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-const gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+// Imports de TYPE uniquement (éliminés au build, n'importent pas le code runtime des SDKs)
+import type Anthropic from '@anthropic-ai/sdk'
+import type OpenAI from 'openai'
+
+// Initialisation lazy + import dynamique pour OpenAI et Anthropic
+// Ces SDKs valident la présence des clés API à l'import du module,
+// ce qui fait échouer `next build` si les clés ne sont pas définies.
+let _anthropic: Anthropic | null = null
+let _openai: OpenAI | null = null
+let _gemini: GoogleGenerativeAI | null = null
+
+async function getAnthropic(): Promise<Anthropic> {
+  if (!_anthropic) {
+    const { default: AnthropicSDK } = await import('@anthropic-ai/sdk')
+    _anthropic = new AnthropicSDK({ apiKey: process.env.ANTHROPIC_API_KEY })
+  }
+  return _anthropic
+}
+
+async function getOpenAI(): Promise<OpenAI> {
+  if (!_openai) {
+    const { default: OpenAISDK } = await import('openai')
+    _openai = new OpenAISDK({ apiKey: process.env.OPENAI_API_KEY })
+  }
+  return _openai
+}
+
+function getGemini() {
+  if (!_gemini) _gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+  return _gemini
+}
 
 // Nombre max d'itérations de tool calling pour éviter les boucles infinies
 const MAX_TOOL_ITERATIONS = 5
@@ -182,6 +209,7 @@ async function callOpenAIWithTools(
   ]
 
   for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
+    const openai = await getOpenAI()
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages,
@@ -275,6 +303,7 @@ async function callAnthropicWithTools(
   ]
 
   for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
+    const anthropic = await getAnthropic()
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       system: systemWithCache,
@@ -343,7 +372,7 @@ async function callGeminiWithTools(
   const tools = getGeminiTools()
   const toolsExecuted: { name: string; result: any }[] = []
 
-  const model = gemini.getGenerativeModel({
+  const model = getGemini().getGenerativeModel({
     model: 'gemini-1.5-pro',
     systemInstruction: systemPrompt,
     tools: tools as any,
