@@ -23,6 +23,10 @@ export async function POST(request: NextRequest) {
   const rawBody = await request.text()
   const signature = request.headers.get('x-hub-signature-256')
 
+  console.log('\n--- 🔴 [WEBHOOK META REÇU] ---')
+  console.log('Signature HMAC :', signature)
+  console.log('Body brut (extrait) :', rawBody.substring(0, 200) + '...')
+
   // 1. Valider la signature HMAC AVANT tout traitement
   if (!verifyMetaSignature(rawBody, signature)) {
     return new NextResponse('Unauthorized', { status: 401 })
