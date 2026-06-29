@@ -7,7 +7,7 @@ import { z } from 'zod'
 const SalonSettingsSchema = z.object({
   currency: z.string().default('MAD'),
   timezone: z.string().default('Africa/Casablanca'),
-  llmProvider: z.enum(['anthropic', 'openai', 'gemini']).default('anthropic'),
+  llmProvider: z.enum(['gemini']).default('gemini'),
   whatsappPhoneNumberId: z.string().optional(),
   instagramPageId: z.string().optional(),
   messengerPageId: z.string().optional(),
@@ -41,7 +41,7 @@ export async function getSalon(id: string) {
   let parsedSettings: SalonSettingsType = {
     currency: 'MAD',
     timezone: 'Africa/Casablanca',
-    llmProvider: 'anthropic',
+    llmProvider: 'gemini',
     language: 'français',
     aiTone: 'chaleureux et professionnel',
   }

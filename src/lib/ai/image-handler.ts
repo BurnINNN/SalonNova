@@ -4,7 +4,7 @@
  * Fonctionnalités :
  * - Téléchargement d'images depuis les URLs Meta (WhatsApp, Instagram, Messenger)
  * - Compression à 512px maximum pour réduire les tokens (économie de ~75%)
- * - Conversion en base64 pour l'API Anthropic/OpenAI
+ * - Conversion en base64 pour l'API Gemini
  * 
  * Note : Utilise `sharp` pour la compression. Si sharp n'est pas disponible,
  * utilise un fallback avec Canvas ou retourne l'image brute.

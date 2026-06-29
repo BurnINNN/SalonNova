@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma'
 
 // ============================================================
-// DÉFINITIONS DES TOOLS (partagées entre OpenAI et Anthropic)
+// DÉFINITIONS DES TOOLS (format Gemini)
 // ============================================================
 
 export const AI_TOOLS_DEFINITIONS = [
@@ -97,24 +97,7 @@ export const AI_TOOLS_DEFINITIONS = [
   },
 ]
 
-// Format OpenAI (function calling)
-export function getOpenAITools() {
-  return AI_TOOLS_DEFINITIONS.map((tool) => ({
-    type: 'function' as const,
-    function: {
-      name: tool.name,
-      description: tool.description,
-      parameters: tool.input_schema,
-    },
-  }))
-}
-
-// Format Anthropic (tool_use)
-export function getAnthropicTools() {
-  return AI_TOOLS_DEFINITIONS
-}
-
-// Format Gemini
+// Format Gemini (seul moteur utilisé)
 export function getGeminiTools() {
   return [{
     functionDeclarations: AI_TOOLS_DEFINITIONS.map((tool) => ({

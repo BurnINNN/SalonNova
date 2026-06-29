@@ -14,7 +14,7 @@ const SettingsFormSchema = z.object({
   settings: z.object({
     currency: z.string().default('MAD'),
     timezone: z.string().default('Africa/Casablanca'),
-    llmProvider: z.enum(['anthropic', 'openai', 'gemini']).default('anthropic'),
+    llmProvider: z.enum(['gemini']).default('gemini'),
     whatsappPhoneNumberId: z.string().optional(),
     instagramPageId: z.string().optional(),
     messengerPageId: z.string().optional(),
@@ -54,7 +54,7 @@ export function SalonSettingsForm({ salon }: SalonSettingsFormProps) {
       settings: {
         currency: salon.settings.currency || 'MAD',
         timezone: salon.settings.timezone || 'Africa/Casablanca',
-        llmProvider: salon.settings.llmProvider || 'anthropic',
+        llmProvider: salon.settings.llmProvider || 'gemini',
         whatsappPhoneNumberId: salon.settings.whatsappPhoneNumberId || '',
         instagramPageId: salon.settings.instagramPageId || '',
         messengerPageId: salon.settings.messengerPageId || '',
@@ -275,9 +275,7 @@ export function SalonSettingsForm({ salon }: SalonSettingsFormProps) {
               {...form.register('settings.llmProvider')}
               className={selectClass}
             >
-              <option value="anthropic">Claude Sonnet 4.6</option>
-              <option value="gemini">Google Gemini 1.5 Pro (Recommandé)</option>
-              <option value="openai">OpenAI (GPT-4o Mini)</option>
+              <option value="gemini">Google Gemini 1.5 Pro</option>
             </select>
           </div>
 
