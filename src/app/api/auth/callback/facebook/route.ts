@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   const salonId = searchParams.get('state');
 
   if (!code || !salonId) {
-    return NextResponse.redirect(new URL('/dashboard/settings?error=missing_parameters', request.url));
+    return NextResponse.redirect(new URL('/settings/integrations?error=missing_parameters', request.url));
   }
 
   try {
@@ -60,10 +60,10 @@ export async function GET(request: Request) {
       });
     }
 
-    return NextResponse.redirect(new URL('/dashboard/settings?success=true', request.url));
+    return NextResponse.redirect(new URL('/settings/integrations?success=true', request.url));
 
   } catch (error: any) {
     console.error("Erreur critique d'échange OAuth Meta:", error.message);
-    return NextResponse.redirect(new URL('/dashboard/settings?error=oauth_failed', request.url));
+    return NextResponse.redirect(new URL('/settings/integrations?error=oauth_failed', request.url));
   }
 }

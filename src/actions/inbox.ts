@@ -118,11 +118,11 @@ export async function sendHumanMessage(conversationId: string, content: string) 
     data: { updatedAt: new Date() },
   })
 
-  // Récupérer le phoneNumberId si WhatsApp
-  let phoneNumberId: string | undefined
+  // Récupérer le whatsappInstanceName si WhatsApp
+  let whatsappInstanceName: string | undefined
   if (conversation.channel === 'WHATSAPP') {
     const salon = await prisma.salon.findUnique({ where: { id: salonId } })
-    phoneNumberId = (salon?.settings as any)?.whatsappPhoneNumberId
+    whatsappInstanceName = (salon?.settings as any)?.whatsappInstanceName
   }
 
   // Envoyer via Meta API (ou mock)
@@ -131,7 +131,7 @@ export async function sendHumanMessage(conversationId: string, content: string) 
       conversation.channel,
       conversation.externalId,
       content,
-      phoneNumberId
+      whatsappInstanceName
     )
   } catch (error) {
     console.error('[INBOX] Erreur envoi message:', error)

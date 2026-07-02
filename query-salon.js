@@ -5,3 +5,5 @@ async function main() {
   console.log("Salons:", salons);
 }
 main().finally(() => prisma.$disconnect());
+
+

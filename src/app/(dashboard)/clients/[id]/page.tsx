@@ -48,7 +48,8 @@ export default async function ClientPage({ params }: { params: { id: string } })
             firstName: client.firstName,
             lastName: client.lastName,
             phone: client.phone,
-            whatsappOptOut: client.whatsappOptOut
+            whatsappOptOut: client.whatsappOptOut,
+            aiInstructions: client.aiInstructions,
           }} />
           <div className="flex gap-2">
             {client.whatsappId && <Badge variant="outline">WhatsApp</Badge>}
@@ -73,6 +74,22 @@ export default async function ClientPage({ params }: { params: { id: string } })
           <div className="text-xs text-muted-foreground mt-1">No-shows</div>
         </div>
       </div>
+
+      {/* Consignes IA spécifiques */}
+      {client.aiInstructions && (
+        <div className="glass-card rounded-2xl p-5 border-l-4 border-amber-500 bg-amber-500/5 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-semibold text-sm">
+            <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-xs">🤖</span>
+            Consignes spécifiques pour l'IA
+          </div>
+          <p className="text-sm text-foreground mt-2 font-medium italic">
+            "{client.aiInstructions}"
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Ces règles sont lues et suivies automatiquement par l'assistante IA Sofia lors de ses discussions avec ce client.
+          </p>
+        </div>
+      )}
 
       {/* Sections */}
       <div className="space-y-6">

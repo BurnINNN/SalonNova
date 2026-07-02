@@ -59,6 +59,7 @@ async function loadClientContext(clientId: string | null) {
     firstName: client.firstName,
     lastName: client.lastName,
     phone: client.phone,
+    aiInstructions: client.aiInstructions,
     lastVisitDate: lastAppointment?.startTime || null,
     lastService: lastAppointment?.service?.name || null,
     totalVisits: client.appointments.length,
@@ -154,7 +155,7 @@ async function callGeminiWithTools(
   const toolsExecuted: { name: string; result: any }[] = []
 
   const model = getGemini().getGenerativeModel({
-    model: 'gemini-1.5-pro',
+    model: 'gemini-2.5-flash',
     systemInstruction: systemPrompt,
     tools: tools as any,
   })

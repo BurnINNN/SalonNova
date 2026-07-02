@@ -8,7 +8,7 @@ const SalonSettingsSchema = z.object({
   currency: z.string().default('MAD'),
   timezone: z.string().default('Africa/Casablanca'),
   llmProvider: z.enum(['gemini']).default('gemini'),
-  whatsappPhoneNumberId: z.string().optional(),
+  whatsappInstanceName: z.string().optional(),
   instagramPageId: z.string().optional(),
   messengerPageId: z.string().optional(),
   // ---- Nouveaux champs pour la messagerie IA ----

@@ -14,6 +14,7 @@ const ClientSchema = z.object({
   whatsappOptOut: z.boolean().optional().default(false),
   instagramId: z.string().optional(),
   messengerId: z.string().optional(),
+  aiInstructions: z.string().optional().nullable(),
   salonId: z.string(),
 })
 

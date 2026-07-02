@@ -15,6 +15,7 @@ interface ClientContext {
   firstName: string
   lastName: string
   phone?: string | null
+  aiInstructions?: string | null
   lastVisitDate?: Date | null
   lastService?: string | null
   totalVisits: number
@@ -100,6 +101,7 @@ IMMÉDIATEMENT l'outil link_client_profile pour le retrouver dans notre système
   ]
 
   if (client.phone) lines.push(`Téléphone : ${client.phone}`)
+  if (client.aiInstructions) lines.push(`⚠️ CONSIGNES DE COMPORTEMENT IA POUR CE CLIENT : ${client.aiInstructions}`)
   if (client.totalVisits > 0) lines.push(`Nombre de visites : ${client.totalVisits}`)
 
   if (client.lastVisitDate) {
@@ -276,6 +278,7 @@ Quand le rendez-vous est prêt, génère EXACTEMENT ce bloc JSON (le code le par
 Puis affiche un récapitulatif lisible pour le client.
 
 == RÈGLES IMPORTANTES ==
+  - Respecte IMPÉRATIVEMENT les "CONSIGNES DE COMPORTEMENT IA POUR CE CLIENT" indiquées dans le contexte client s'il y en a.
   - Réponds TOUJOURS dans la même langue que le client
   - Maximum 3 phrases par message — les clients lisent sur téléphone
   - Une seule question par message — jamais de liste de questions

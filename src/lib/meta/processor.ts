@@ -10,9 +10,7 @@ import { sendChannelMessage } from './send'
 
 export async function processMetaEvent(body: any) {
   try {
-    if (body.object === 'whatsapp_business_account') {
-      await processWhatsAppEvent(body)
-    } else if (body.object === 'instagram') {
+    if (body.object === 'instagram') {
       await processInstagramEvent(body)
     } else if (body.object === 'page') {
       await processMessengerEvent(body)
@@ -21,95 +19,6 @@ export async function processMetaEvent(body: any) {
     }
   } catch (error) {
     console.error('[WEBHOOK] Erreur de traitement:', error)
-  }
-}
-
-// ============================================================
-// WHATSAPP
-// ============================================================
-
-async function processWhatsAppEvent(body: any) {
-  const entry = body.entry?.[0]
-  const changes = entry?.changes?.[0]
-  const value = changes?.value
-
-  if (!value?.messages) return
-
-  for (const msg of value.messages) {
-    const senderPhone = msg.from
-    const phoneNumberId = value.metadata.phone_number_id
-    const contactName = value.contacts?.[0]?.profile?.name || 'Client'
-
-    // Trouver le salon via le phoneNumberId configuré dans ses settings
-    const salon = await prisma.salon.findFirst({
-      where: {
-        settings: {
-          path: ['whatsappPhoneNumberId'],
-          equals: phoneNumberId,
-        },
-      },
-    })
-
-    if (!salon) {
-      console.log('[WHATSAPP] Aucun salon configuré pour ce numéro:', phoneNumberId)
-      continue
-    }
-
-    // WhatsApp : auto-liaison par numéro de téléphone
-    let client = await prisma.client.findFirst({
-      where: {
-        salonId: salon.id,
-        OR: [
-          { whatsappId: senderPhone },
-          { phone: senderPhone },
-          { phone: '+' + senderPhone },
-        ],
-      },
-    })
-
-    if (!client) {
-      // Créer un client automatiquement pour WhatsApp (on a le numéro)
-      client = await prisma.client.create({
-        data: {
-          salonId: salon.id,
-          whatsappId: senderPhone,
-          phone: '+' + senderPhone,
-          firstName: contactName,
-          lastName: '',
-        },
-      })
-    } else if (!client.whatsappId) {
-      // Mettre à jour le whatsappId si pas encore renseigné
-      await prisma.client.update({
-        where: { id: client.id },
-        data: { whatsappId: senderPhone },
-      })
-    }
-
-    // Extraire le texte et l'image éventuelle
-    let messageText = ''
-    let imageMediaId: string | null = null
-
-    if (msg.type === 'text') {
-      messageText = msg.text.body
-    } else if (msg.type === 'image') {
-      imageMediaId = msg.image?.id || null
-      messageText = msg.image?.caption || 'Voici une photo de mes cheveux'
-    } else {
-      console.log('[WHATSAPP] Type de message non supporté:', msg.type)
-      continue
-    }
-
-    await handleIncomingMessage({
-      salonId: salon.id,
-      channel: 'WHATSAPP',
-      externalId: senderPhone,
-      messageText,
-      externalMessageId: msg.id,
-      clientId: client.id,
-      phoneNumberId,
-      imageMediaId,
-    })
   }
 }
 
@@ -127,7 +36,7 @@ async function processInstagramEvent(body: any) {
     const recipientId = event.recipient.id
 
     // Trouver le salon via l'instagramPageId
-    const salon = await prisma.salon.findFirst({
+    let salon = await prisma.salon.findFirst({
       where: {
         settings: {
           path: ['instagramPageId'],
@@ -137,8 +46,23 @@ async function processInstagramEvent(body: any) {
     })
 
     if (!salon) {
-      console.log('[INSTAGRAM] Aucun salon configuré pour cet ID:', recipientId)
-      continue
+      // Association automatique si salon unique (facilite le dev et évite les blocages)
+      const salons = await prisma.salon.findMany()
+      if (salons.length === 1) {
+        salon = salons[0]
+        const updatedSettings = {
+          ...(salon.settings as any),
+          instagramPageId: recipientId,
+        }
+        await prisma.salon.update({
+          where: { id: salon.id },
+          data: { settings: updatedSettings },
+        })
+        console.log(`[INSTAGRAM] Association automatique de l'ID de page ${recipientId} au salon unique ${salon.name}`)
+      } else {
+        console.log('[INSTAGRAM] Aucun salon configuré pour cet ID:', recipientId)
+        continue
+      }
     }
 
     // Instagram : on ne peut pas auto-lier (ID opaque)
@@ -189,7 +113,7 @@ async function processMessengerEvent(body: any) {
     const recipientId = event.recipient.id
 
     // Trouver le salon via le messengerPageId
-    const salon = await prisma.salon.findFirst({
+    let salon = await prisma.salon.findFirst({
       where: {
         settings: {
           path: ['messengerPageId'],
@@ -199,8 +123,23 @@ async function processMessengerEvent(body: any) {
     })
 
     if (!salon) {
-      console.log('[MESSENGER] Aucun salon configuré pour cette Page:', recipientId)
-      continue
+      // Association automatique si salon unique (facilite le dev et évite les blocages)
+      const salons = await prisma.salon.findMany()
+      if (salons.length === 1) {
+        salon = salons[0]
+        const updatedSettings = {
+          ...(salon.settings as any),
+          messengerPageId: recipientId,
+        }
+        await prisma.salon.update({
+          where: { id: salon.id },
+          data: { settings: updatedSettings },
+        })
+        console.log(`[MESSENGER] Association automatique de l'ID de page ${recipientId} au salon unique ${salon.name}`)
+      } else {
+        console.log('[MESSENGER] Aucun salon configuré pour cette Page:', recipientId)
+        continue
+      }
     }
 
     // Messenger : ID opaque, comme Instagram

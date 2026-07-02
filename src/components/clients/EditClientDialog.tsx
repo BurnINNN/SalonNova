@@ -23,6 +23,7 @@ interface EditClientDialogProps {
     lastName: string
     phone: string | null
     whatsappOptOut: boolean
+    aiInstructions?: string | null
   }
 }
 
@@ -35,6 +36,7 @@ export function EditClientDialog({ client }: EditClientDialogProps) {
   const [lastName, setLastName] = useState(client.lastName)
   const [phone, setPhone] = useState(client.phone || '')
   const [whatsappOptOut, setWhatsappOptOut] = useState(client.whatsappOptOut)
+  const [aiInstructions, setAiInstructions] = useState(client.aiInstructions || '')
 
   function handleUpdate(e: React.FormEvent) {
     e.preventDefault()
@@ -50,6 +52,7 @@ export function EditClientDialog({ client }: EditClientDialogProps) {
           lastName,
           phone: phone || undefined,
           whatsappOptOut,
+          aiInstructions: aiInstructions || null,
         })
         toast.success('Informations modifiées avec succès ✓')
         setIsOpen(false)
@@ -112,7 +115,17 @@ export function EditClientDialog({ client }: EditClientDialogProps) {
                 placeholder="+212 6XX XXX XXX"
               />
             </div>
-            <div className="flex items-center space-x-2 pt-2">
+            <div className="space-y-2">
+              <Label htmlFor="edit-aiInstructions">Consignes spécifiques pour l'IA</Label>
+              <textarea
+                id="edit-aiInstructions"
+                value={aiInstructions}
+                onChange={(e) => setAiInstructions(e.target.value)}
+                placeholder="Ex: Lui parler uniquement en anglais, proposer un café dès son arrivée..."
+                className="w-full min-h-[70px] max-h-[140px] rounded-xl border border-input bg-background/50 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              />
+            </div>
+            <div className="flex items-center space-x-2 pt-1">
               <input 
                 type="checkbox" 
                 id="edit-whatsappOptOut" 

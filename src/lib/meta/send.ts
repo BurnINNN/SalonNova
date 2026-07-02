@@ -1,28 +1,19 @@
+import { sendWhatsAppEvolutionMessage } from '../whatsapp/send'
+
 const META_GRAPH_API = 'https://graph.facebook.com/v19.0'
 
 /**
- * Envoie un message sur le bon canal Meta.
- * En mode mock (pas de META_ACCESS_TOKEN), log en console uniquement.
+ * Envoie un message sur le bon canal (WhatsApp via Evolution API, Instagram/Messenger via Meta API).
  */
 export async function sendChannelMessage(
   channel: string,
   recipientId: string,
   text: string,
-  phoneNumberId?: string
+  whatsappInstanceName?: string
 ) {
-  const token = process.env.META_ACCESS_TOKEN
-
-  // Mode mock si pas de token configuré
-  if (!token) {
-    console.log(`\n📨 [MOCK ${channel}] → ${recipientId}`)
-    console.log(`   Message: ${text}`)
-    console.log(`   (Configurez META_ACCESS_TOKEN pour envoyer réellement)\n`)
-    return { mock: true, messageId: `mock_${Date.now()}` }
-  }
-
   switch (channel) {
     case 'WHATSAPP':
-      return sendWhatsAppMessage(phoneNumberId!, recipientId, text)
+      return sendWhatsAppEvolutionMessage(whatsappInstanceName || 'salon_default', recipientId, text)
     case 'INSTAGRAM':
       return sendInstagramMessage(recipientId, text)
     case 'MESSENGER':
@@ -33,47 +24,17 @@ export async function sendChannelMessage(
 }
 
 /**
- * Envoie un message WhatsApp via la Cloud API.
- */
-export async function sendWhatsAppMessage(
-  phoneNumberId: string,
-  to: string,
-  text: string
-) {
-  const token = process.env.META_ACCESS_TOKEN
-  const url = `${META_GRAPH_API}/${phoneNumberId}/messages`
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      messaging_product: 'whatsapp',
-      to: to,
-      type: 'text',
-      text: { body: text },
-    }),
-  })
-
-  if (!response.ok) {
-    const error = await response.json()
-    console.error('[META API] Erreur WhatsApp:', error)
-    throw new Error("Échec de l'envoi WhatsApp")
-  }
-
-  return response.json()
-}
-
-/**
  * Envoie un message Instagram via la Send API (Messenger Platform).
- * Instagram utilise la même API que Messenger mais avec l'IGSID comme recipient.
  */
 export async function sendInstagramMessage(recipientId: string, text: string) {
   const token = process.env.META_ACCESS_TOKEN
-  const url = `${META_GRAPH_API}/me/messages`
+  if (!token) {
+    console.log(`\n📨 [MOCK INSTAGRAM] → ${recipientId}`)
+    console.log(`   Message: ${text}\n`)
+    return { mock: true, messageId: `mock_${Date.now()}` }
+  }
 
+  const url = `${META_GRAPH_API}/me/messages`
   const response = await fetch(url, {
     method: 'POST',
     headers: {
@@ -100,8 +61,13 @@ export async function sendInstagramMessage(recipientId: string, text: string) {
  */
 export async function sendMessengerMessage(recipientId: string, text: string) {
   const token = process.env.META_ACCESS_TOKEN
-  const url = `${META_GRAPH_API}/me/messages`
+  if (!token) {
+    console.log(`\n📨 [MOCK MESSENGER] → ${recipientId}`)
+    console.log(`   Message: ${text}\n`)
+    return { mock: true, messageId: `mock_${Date.now()}` }
+  }
 
+  const url = `${META_GRAPH_API}/me/messages`
   const response = await fetch(url, {
     method: 'POST',
     headers: {
@@ -122,3 +88,4 @@ export async function sendMessengerMessage(recipientId: string, text: string) {
 
   return response.json()
 }
+

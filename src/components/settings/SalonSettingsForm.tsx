@@ -15,7 +15,7 @@ const SettingsFormSchema = z.object({
     currency: z.string().default('MAD'),
     timezone: z.string().default('Africa/Casablanca'),
     llmProvider: z.enum(['gemini']).default('gemini'),
-    whatsappPhoneNumberId: z.string().optional(),
+    whatsappInstanceName: z.string().optional(),
     instagramPageId: z.string().optional(),
     messengerPageId: z.string().optional(),
     // Champs Salon / IA
@@ -55,7 +55,7 @@ export function SalonSettingsForm({ salon }: SalonSettingsFormProps) {
         currency: salon.settings.currency || 'MAD',
         timezone: salon.settings.timezone || 'Africa/Casablanca',
         llmProvider: salon.settings.llmProvider || 'gemini',
-        whatsappPhoneNumberId: salon.settings.whatsappPhoneNumberId || '',
+        whatsappInstanceName: salon.settings.whatsappInstanceName || '',
         instagramPageId: salon.settings.instagramPageId || '',
         messengerPageId: salon.settings.messengerPageId || '',
         address: salon.settings.address || '',
@@ -277,15 +277,6 @@ export function SalonSettingsForm({ salon }: SalonSettingsFormProps) {
             >
               <option value="gemini">Google Gemini 1.5 Pro</option>
             </select>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">ID WhatsApp Business</label>
-            <input
-              {...form.register('settings.whatsappPhoneNumberId')}
-              className={inputClass}
-              placeholder="Ex: 1234567890"
-            />
           </div>
 
           <div className="space-y-2">
