@@ -6,7 +6,9 @@ import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import WhatsAppIntegrationCard from './WhatsAppIntegrationCard'
+import CalendarIntegrationCard from './CalendarIntegrationCard'
 import { getWhatsAppConnectionState } from '@/actions/integrations'
+import { randomUUID } from 'crypto'
 
 interface PageProps {
   searchParams: {
@@ -29,6 +31,16 @@ export default async function IntegrationsPage({ searchParams }: PageProps) {
 
   if (!employeeRecord) {
     return <div className="p-4 text-destructive">Aucun employé lié à votre compte.</div>
+  }
+
+  // S'assurer de la présence d'un jeton de calendrier pour cet employé
+  let calendarToken = employeeRecord.calendarToken
+  if (!calendarToken) {
+    calendarToken = randomUUID()
+    await prisma.employee.update({
+      where: { id: employeeRecord.id },
+      data: { calendarToken },
+    })
   }
 
   const salonId = employeeRecord.salonId
@@ -115,6 +127,12 @@ export default async function IntegrationsPage({ searchParams }: PageProps) {
             </div>
           </CardContent>
         </Card>
+
+        {/* 3. CARTE CALENDRIER (iCalendar Subscription) */}
+        <CalendarIntegrationCard 
+          employeeId={employeeRecord.id}
+          initialToken={calendarToken}
+        />
       </div>
     </div>
   )
