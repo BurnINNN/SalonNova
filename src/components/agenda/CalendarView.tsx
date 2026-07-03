@@ -82,7 +82,7 @@ export function CalendarView({ appointments, onDateClick, onEventClick }: Calend
         eventClick={(info) => onEventClick(info.event.id)}
         eventContent={(eventInfo) => <AppointmentBlock eventInfo={eventInfo} />}
         height="100%"
-        timeZone="Africa/Casablanca"
+        timeZone="local"
       />
     </div>
   )
