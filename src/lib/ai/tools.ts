@@ -376,7 +376,7 @@ export async function handleProposeAppointment(
     const existingAppointments = await prisma.appointment.findMany({
       where: {
         salonId,
-        status: { in: ['SCHEDULED', 'IN_PROGRESS'] },
+        status: { in: ['SCHEDULED', 'IN_PROGRESS', 'PENDING'] },
         startTime: { gte: searchStart, lte: searchEnd },
       },
       orderBy: { startTime: 'asc' },
@@ -503,15 +503,15 @@ export async function handleCreateAppointmentRequest(
       }
     }
 
-    // 3. Trouver un employé disponible (le premier pour simplifier)
-    const employee = await prisma.employee.findFirst({
+    // 3. Trouver un coiffeur disponible pour ce créneau
+    const employees = await prisma.employee.findMany({
       where: { salonId, role: 'HAIRDRESSER' },
     })
 
-    if (!employee) {
+    if (employees.length === 0) {
       return {
         success: false,
-        message: "Aucun coiffeur disponible. Le salon confirmera le RDV directement.",
+        message: "Aucun coiffeur disponible au salon.",
       }
     }
 
@@ -520,35 +520,42 @@ export async function handleCreateAppointmentRequest(
     const endTime = new Date(startTime)
     endTime.setMinutes(endTime.getMinutes() + service.duration + (service.bufferMinutes || 0))
 
-    // 5. Vérifier qu'il n'y a pas de conflit
-    const conflicting = await prisma.appointment.findFirst({
-      where: {
-        salonId,
-        employeeId: employee.id,
-        status: { in: ['SCHEDULED', 'IN_PROGRESS'] },
-        OR: [
-          { startTime: { lt: endTime }, endTime: { gt: startTime } },
-        ],
-      },
-    })
-
-    if (conflicting) {
-      return {
-        success: false,
-        message: "Ce créneau n'est plus disponible. Propose un autre créneau au client.",
+    // 5. Trouver le premier coiffeur sans conflit
+    let assignedEmployee = null
+    for (const emp of employees) {
+      const conflicting = await prisma.appointment.findFirst({
+        where: {
+          salonId,
+          employeeId: emp.id,
+          status: { in: ['SCHEDULED', 'IN_PROGRESS', 'PENDING'] },
+          OR: [
+            { startTime: { lt: endTime }, endTime: { gt: startTime } },
+          ],
+        },
+      })
+      if (!conflicting) {
+        assignedEmployee = emp
+        break
       }
     }
 
-    // 6. Créer le rendez-vous
+    if (!assignedEmployee) {
+      return {
+        success: false,
+        message: "Ce créneau n'est plus disponible (tous les coiffeurs sont occupés). Propose un autre créneau au client.",
+      }
+    }
+
+    // 6. Créer le rendez-vous en statut PENDING
     const appointment = await prisma.appointment.create({
       data: {
         salonId,
         clientId: conversation.clientId,
         serviceId: service.id,
-        employeeId: employee.id,
+        employeeId: assignedEmployee.id,
         startTime,
         endTime,
-        status: 'SCHEDULED',
+        status: 'PENDING',
         bookedVia: 'AI_AGENT',
         notes: args.notes || null,
       },
@@ -561,7 +568,7 @@ export async function handleCreateAppointmentRequest(
 
     return {
       success: true,
-      message: `Rendez-vous créé avec succès ! Le salon confirmera dans les 24h.`,
+      message: `Rendez-vous créé avec succès ! Le salon confirmera sous 1h.`,
       data: {
         appointmentId: appointment.id,
         clientName: client ? `${client.firstName} ${client.lastName}`.trim() : 'Client',
@@ -575,7 +582,7 @@ export async function handleCreateAppointmentRequest(
           hour: '2-digit',
           minute: '2-digit',
         }),
-        employee: employee.name,
+        employee: assignedEmployee.name,
       },
     }
   } catch (error) {

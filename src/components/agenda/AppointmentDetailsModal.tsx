@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { markNoShow, cancelAppointment } from '@/actions/appointments'
+import { markNoShow, cancelAppointment, confirmAppointment } from '@/actions/appointments'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
@@ -58,8 +58,22 @@ export function AppointmentDetailsModal({ appointment, isOpen, onClose }: Appoin
     }
   }
 
+  const handleConfirm = async () => {
+    setIsSubmitting(true)
+    try {
+      await confirmAppointment(id)
+      toast.success('Rendez-vous confirmé')
+      onClose()
+    } catch (error) {
+      toast.error('Erreur lors de la confirmation')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   const getStatusBadge = () => {
     switch(status) {
+      case 'PENDING': return <Badge variant="outline" className="text-orange-500 border-orange-500 bg-orange-50/50 animate-pulse">En attente</Badge>
       case 'SCHEDULED': return <Badge variant="secondary">Prévu</Badge>
       case 'COMPLETED': return <Badge variant="default" className="bg-green-500">Terminé</Badge>
       case 'NO_SHOW': return <Badge variant="destructive">No-Show</Badge>
@@ -146,6 +160,26 @@ export function AppointmentDetailsModal({ appointment, isOpen, onClose }: Appoin
               >
                 <Ban className="w-4 h-4 mr-2" />
                 Annuler
+              </Button>
+            </div>
+          )}
+
+          {status === 'PENDING' && (
+            <div className="grid grid-cols-2 gap-2 w-full">
+              <Button 
+                className="bg-green-600 hover:bg-green-700 text-white" 
+                onClick={handleConfirm}
+                disabled={isSubmitting}
+              >
+                Confirmer
+              </Button>
+              <Button 
+                variant="outline" 
+                className="text-destructive border-destructive hover:bg-destructive/10"
+                onClick={handleCancel}
+                disabled={isSubmitting}
+              >
+                Refuser
               </Button>
             </div>
           )}

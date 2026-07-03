@@ -256,48 +256,7 @@ export function SalonSettingsForm({ salon }: SalonSettingsFormProps) {
         </div>
       </div>
 
-      {/* Intégrations IA & Canaux */}
-      <div className="glass-card p-6 space-y-4">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-            <MessageCircle className="w-4 h-4" />
-          </div>
-          <div>
-            <h2 className="text-xl font-semibold">Intégrations (IA & Réseaux)</h2>
-            <p className="text-sm text-muted-foreground">Connectez vos canaux de messagerie Meta.</p>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Moteur d'Intelligence Artificielle</label>
-            <select
-              {...form.register('settings.llmProvider')}
-              className={selectClass}
-            >
-              <option value="gemini">Google Gemini 1.5 Pro</option>
-            </select>
-          </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">ID Page Instagram</label>
-            <input
-              {...form.register('settings.instagramPageId')}
-              className={inputClass}
-              placeholder="Ex: 1234567890"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">ID Page Messenger</label>
-            <input
-              {...form.register('settings.messengerPageId')}
-              className={inputClass}
-              placeholder="Ex: 1234567890"
-            />
-          </div>
-        </div>
-      </div>
 
       <div className="flex justify-end">
         <button

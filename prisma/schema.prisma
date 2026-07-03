@@ -192,6 +192,7 @@ model Appointment {
 }
 
 enum AppointmentStatus {
+  PENDING
   SCHEDULED
   IN_PROGRESS
   COMPLETED

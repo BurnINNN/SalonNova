@@ -46,23 +46,24 @@ async function loadClientContext(clientId: string | null) {
         orderBy: { startTime: 'desc' },
         take: 5,
         include: { service: true },
-        where: { status: { in: ['COMPLETED', 'SCHEDULED'] } },
+        where: { status: { in: ['COMPLETED', 'SCHEDULED', 'PENDING'] } },
       },
     },
   })
 
   if (!client) return null
 
-  const lastAppointment = client.appointments[0]
+  // Trouver le dernier rendez-vous complété ou prévu pour l'historique de visite
+  const lastActiveAppointment = client.appointments.find(a => a.status === 'COMPLETED' || a.status === 'SCHEDULED')
 
   return {
     firstName: client.firstName,
     lastName: client.lastName,
     phone: client.phone,
     aiInstructions: client.aiInstructions,
-    lastVisitDate: lastAppointment?.startTime || null,
-    lastService: lastAppointment?.service?.name || null,
-    totalVisits: client.appointments.length,
+    lastVisitDate: lastActiveAppointment?.startTime || null,
+    lastService: lastActiveAppointment?.service?.name || null,
+    totalVisits: client.appointments.filter(a => a.status === 'COMPLETED').length,
     hairProfile: client.hairProfile ? {
       hairType: client.hairProfile.hairType,
       hairCondition: client.hairProfile.hairCondition,
@@ -76,6 +77,8 @@ async function loadClientContext(clientId: string | null) {
     recentAppointments: client.appointments.map((a) => ({
       date: a.startTime,
       serviceName: a.service?.name || 'Prestation inconnue',
+      status: a.status,
+      createdAt: a.createdAt,
       notes: a.notes,
     })),
   }

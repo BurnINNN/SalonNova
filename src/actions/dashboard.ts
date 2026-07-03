@@ -29,7 +29,7 @@ export async function getDashboardMetrics(salonId: string, startDate?: Date, end
       where: {
         salonId,
         startTime: { gte: dayStart, lte: dayEnd },
-        status: 'SCHEDULED',
+        status: { in: ['SCHEDULED', 'PENDING'] },
       },
     }),
     prisma.client.count({

@@ -132,16 +132,6 @@ async function createAppointmentFromRdv(
     return null
   }
 
-  // 3. Trouver un employé
-  const employee = await prisma.employee.findFirst({
-    where: { salonId, role: 'HAIRDRESSER' },
-  })
-
-  if (!employee) {
-    console.warn('[RDV_PARSER] Aucun employé disponible')
-    return null
-  }
-
   // 4. Parser le créneau (format flexible)
   const startTime = parseCreneauToDate(rdv.creneau)
   if (!startTime) {
@@ -153,6 +143,34 @@ async function createAppointmentFromRdv(
   const endTime = new Date(startTime)
   endTime.setMinutes(endTime.getMinutes() + service.duration + (service.bufferMinutes || 0))
 
+  // 3. Trouver un coiffeur disponible pour ce créneau
+  const employees = await prisma.employee.findMany({
+    where: { salonId, role: 'HAIRDRESSER' },
+  })
+
+  let assignedEmployee = null
+  for (const emp of employees) {
+    const conflicting = await prisma.appointment.findFirst({
+      where: {
+        salonId,
+        employeeId: emp.id,
+        status: { in: ['SCHEDULED', 'IN_PROGRESS', 'PENDING'] },
+        OR: [
+          { startTime: { lt: endTime }, endTime: { gt: startTime } },
+        ],
+      },
+    })
+    if (!conflicting) {
+      assignedEmployee = emp
+      break
+    }
+  }
+
+  if (!assignedEmployee) {
+    console.warn('[RDV_PARSER] Aucun coiffeur disponible pour ce créneau')
+    return null
+  }
+
   // 6. Vérifier qu'il n'existe pas déjà un RDV identique
   const existing = await prisma.appointment.findFirst({
     where: {
@@ -160,7 +178,7 @@ async function createAppointmentFromRdv(
       clientId: conversation.clientId,
       serviceId: service.id,
       startTime,
-      status: { in: ['SCHEDULED', 'IN_PROGRESS'] },
+      status: { in: ['SCHEDULED', 'PENDING', 'IN_PROGRESS'] },
     },
   })
 
@@ -169,16 +187,16 @@ async function createAppointmentFromRdv(
     return existing
   }
 
-  // 7. Créer le rendez-vous
+  // 7. Créer le rendez-vous en statut PENDING
   const appointment = await prisma.appointment.create({
     data: {
       salonId,
       clientId: conversation.clientId,
       serviceId: service.id,
-      employeeId: employee.id,
+      employeeId: assignedEmployee.id,
       startTime,
       endTime,
-      status: 'SCHEDULED',
+      status: 'PENDING',
       bookedVia: 'AI_AGENT',
       notes: rdv.notes || null,
     },

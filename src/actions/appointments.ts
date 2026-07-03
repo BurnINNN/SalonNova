@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { addMinutes } from 'date-fns'
+import { sendChannelMessage } from '@/lib/meta/send'
 
 const SLOT_INTERVAL_MINUTES = 30
 
@@ -24,7 +25,7 @@ const CreateAppointmentSchema = z.object({
 const UpdateAppointmentSchema = z.object({
   id: z.string(),
   startTime: z.string().optional(),
-  status: z.enum(['SCHEDULED', 'COMPLETED', 'NO_SHOW', 'CANCELLED']).optional(),
+  status: z.enum(['PENDING', 'SCHEDULED', 'COMPLETED', 'NO_SHOW', 'CANCELLED']).optional(),
   notes: z.string().optional(),
   employeeId: z.string().optional(),
   serviceId: z.string().optional(),
@@ -47,7 +48,7 @@ async function checkConflict(
   const conflict = await prisma.appointment.findFirst({
     where: {
       employeeId,
-      status: { in: ['SCHEDULED'] },
+      status: { in: ['SCHEDULED', 'PENDING'] },
       id: excludeId ? { not: excludeId } : undefined,
       AND: [
         { startTime: { lt: endTime } },
@@ -65,9 +66,11 @@ export async function createAppointment(
 ) {
   const data = CreateAppointmentSchema.parse(input)
 
-  const duration = await getServiceDuration(data.serviceId)
+  const service = await prisma.service.findUnique({ where: { id: data.serviceId } })
+  if (!service) throw new Error('Prestation introuvable')
+  const totalDuration = service.duration + (service.bufferMinutes || 0)
   const startTime = new Date(data.startTime)
-  const endTime = addMinutes(startTime, duration)
+  const endTime = addMinutes(startTime, totalDuration)
 
   const hasConflict = await checkConflict(data.employeeId, startTime, endTime)
   if (hasConflict) throw new Error('Ce créneau est déjà réservé.')
@@ -102,10 +105,12 @@ export async function updateAppointment(
 
   if (startTime || serviceId) {
     const newStart = startTime ? new Date(startTime) : existing.startTime
-    const duration = serviceId
-      ? await getServiceDuration(serviceId)
-      : existing.service.duration
-    endTime = addMinutes(newStart, duration)
+    const service = serviceId
+      ? await prisma.service.findUnique({ where: { id: serviceId } })
+      : existing.service
+    if (!service) throw new Error('Prestation introuvable')
+    const totalDuration = service.duration + (service.bufferMinutes || 0)
+    endTime = addMinutes(newStart, totalDuration)
 
     const hasConflict = await checkConflict(
       targetEmployeeId,
@@ -182,7 +187,7 @@ export async function checkAvailability(
       salonId,
       employeeId,
       startTime: { gte: dayStart, lte: dayEnd },
-      status: { in: ['SCHEDULED'] },
+      status: { in: ['SCHEDULED', 'PENDING'] },
     },
     orderBy: { startTime: 'asc' },
   })
@@ -228,7 +233,7 @@ export async function getAppointmentsForCalendar(
     title: `${apt.client.firstName} — ${apt.service.name}`,
     start: apt.startTime.toISOString(),
     end: apt.endTime.toISOString(),
-    backgroundColor: apt.status === 'NO_SHOW' ? '#ef4444' : '#3b82f6',
+    backgroundColor: apt.status === 'PENDING' ? '#d97706' : apt.status === 'NO_SHOW' ? '#ef4444' : '#3b82f6',
     extendedProps: {
       status: apt.status,
       employeeName: apt.employee.name,
@@ -248,4 +253,132 @@ async function autoDeductStock(
 ) {
   const { autoDeductStockForAppointment } = await import('./stock')
   await autoDeductStockForAppointment(serviceId, appointmentId, salonId)
+}
+
+export async function confirmAppointment(id: string, conversationId?: string) {
+  const appointment = await prisma.appointment.update({
+    where: { id },
+    data: { status: 'SCHEDULED' },
+    include: { client: true, service: true, employee: true }
+  })
+
+  if (conversationId) {
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: conversationId }
+    })
+
+    if (conversation) {
+      const timeStr = appointment.startTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+      const dateStr = appointment.startTime.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+      
+      const confirmationMsg = `Votre rendez-vous du ${dateStr} à ${timeStr} pour la prestation ${appointment.service.name} avec ${appointment.employee.name} a été validé ! Nous vous attendons avec impatience.`
+
+      await prisma.message.create({
+        data: {
+          conversationId,
+          content: `[Rendez-vous de ${appointment.client.firstName} pour ${appointment.service.name} CONFIRMÉ]`,
+          role: 'SYSTEM',
+        }
+      })
+
+      await prisma.message.create({
+        data: {
+          conversationId,
+          content: confirmationMsg,
+          role: 'ASSISTANT',
+        }
+      })
+
+      let whatsappInstanceName: string | undefined
+      if (conversation.channel === 'WHATSAPP') {
+        const salon = await prisma.salon.findUnique({ where: { id: conversation.salonId } })
+        whatsappInstanceName = (salon?.settings as any)?.whatsappInstanceName
+      }
+
+      try {
+        await sendChannelMessage(
+          conversation.channel,
+          conversation.externalId,
+          confirmationMsg,
+          whatsappInstanceName
+        )
+      } catch (error) {
+        console.error('[CONFIRM_APT] Erreur envoi message:', error)
+      }
+
+      await prisma.conversation.update({
+        where: { id: conversationId },
+        data: { updatedAt: new Date() }
+      })
+    }
+  }
+
+  revalidatePath('/agenda')
+  revalidatePath('/dashboard')
+  revalidatePath('/inbox')
+  return { success: true, appointment }
+}
+
+export async function rejectAppointment(id: string, conversationId?: string) {
+  const appointment = await prisma.appointment.update({
+    where: { id },
+    data: { status: 'CANCELLED' },
+    include: { client: true, service: true, employee: true }
+  })
+
+  if (conversationId) {
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: conversationId }
+    })
+
+    if (conversation) {
+      const timeStr = appointment.startTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+      const dateStr = appointment.startTime.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+      
+      const rejectionMsg = `Bonjour ${appointment.client.firstName}, malheureusement nous ne pouvons pas valider votre demande de rendez-vous du ${dateStr} à ${timeStr} pour ${appointment.service.name}. N'hésitez pas à nous proposer un autre créneau !`
+
+      await prisma.message.create({
+        data: {
+          conversationId,
+          content: `[Rendez-vous de ${appointment.client.firstName} pour ${appointment.service.name} REFUSÉ/ANNULÉ]`,
+          role: 'SYSTEM',
+        }
+      })
+
+      await prisma.message.create({
+        data: {
+          conversationId,
+          content: rejectionMsg,
+          role: 'ASSISTANT',
+        }
+      })
+
+      let whatsappInstanceName: string | undefined
+      if (conversation.channel === 'WHATSAPP') {
+        const salon = await prisma.salon.findUnique({ where: { id: conversation.salonId } })
+        whatsappInstanceName = (salon?.settings as any)?.whatsappInstanceName
+      }
+
+      try {
+        await sendChannelMessage(
+          conversation.channel,
+          conversation.externalId,
+          rejectionMsg,
+          whatsappInstanceName
+        )
+      } catch (error) {
+        console.error('[REJECT_APT] Erreur envoi message:', error)
+      }
+
+      await prisma.conversation.update({
+        where: { id: conversationId },
+        data: { updatedAt: new Date() }
+      })
+    }
+  }
+
+  revalidatePath('/agenda')
+  revalidatePath('/dashboard')
+  revalidatePath('/inbox')
+  return { success: true, appointment }
 }

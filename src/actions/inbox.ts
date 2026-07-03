@@ -37,7 +37,22 @@ export async function getConversations(statusFilter?: string) {
       ...(statusFilter && statusFilter !== 'ALL' ? { status: statusFilter as any } : {}),
     },
     include: {
-      client: true,
+      client: {
+        include: {
+          appointments: {
+            where: {
+              status: 'PENDING',
+            },
+            include: {
+              service: true,
+              employee: true,
+            },
+            orderBy: {
+              startTime: 'asc',
+            },
+          },
+        },
+      },
       messages: {
         orderBy: { createdAt: 'desc' },
         take: 1,

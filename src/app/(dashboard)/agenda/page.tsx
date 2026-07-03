@@ -90,6 +90,9 @@ export default async function AgendaPage() {
     let opacity = 'ff' // 100%
     if (apt.status === 'CANCELLED' || apt.status === 'NO_SHOW') {
       bgColor = '#94a3b8' // Slate 400 for cancelled
+    } else if (apt.status === 'PENDING') {
+      bgColor = '#d97706' // Amber 600
+      opacity = 'b3' // 70%
     } else if (apt.status === 'SCHEDULED') {
       opacity = 'cc' // 80%
     }

@@ -30,8 +30,10 @@ interface ClientContext {
     notes?: string | null
   } | null
   recentAppointments?: {
-    date: Date
+    date: Date | string
     serviceName: string
+    status?: string
+    createdAt?: Date | string
     notes?: string | null
   }[]
 }
@@ -133,13 +135,16 @@ IMMÉDIATEMENT l'outil link_client_profile pour le retrouver dans notre système
 
   // Derniers rendez-vous
   if (client.recentAppointments && client.recentAppointments.length > 0) {
-    lines.push('', '--- Dernières visites ---')
+    lines.push('', '--- Historique des rendez-vous / Demandes ---')
     for (const appt of client.recentAppointments) {
       const dateStr = new Date(appt.date).toLocaleDateString('fr-FR', {
-        day: 'numeric', month: 'long',
+        day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
       })
       const notes = appt.notes ? ` (${appt.notes})` : ''
-      lines.push(`- ${dateStr} : ${appt.serviceName}${notes}`)
+      const statusText = appt.status === 'PENDING'
+        ? `[EN ATTENTE - Demandé le ${new Date(appt.createdAt!).toLocaleString('fr-FR')}]`
+        : `[${appt.status}]`
+      lines.push(`- ${dateStr} : ${appt.serviceName} ${statusText}${notes}`)
     }
   }
 
@@ -199,6 +204,9 @@ export function getSystemPrompt(
   const servicesList = formatServicesList(salon.services || [])
   const hairCareRules = getHairCareRules(salon)
 
+  const timezone = (salon.settings as any)?.timezone || 'Africa/Casablanca'
+  const nowStr = new Date().toLocaleString('fr-FR', { timeZone: timezone })
+
   // Si on a un clientContext enrichi, l'utiliser. Sinon, construire un contexte basique.
   let clientSection: string
   if (clientContext) {
@@ -223,6 +231,9 @@ export function getSystemPrompt(
   return `
 Tu es ${config.aiName}, l'assistante IA de ${config.name}, un salon de coiffure professionnel.
 Tu communiques en ${config.language} avec un ton ${config.aiTone}.
+
+== DATE ET HEURE ACTUELLES ==
+La date et l'heure actuelles au salon sont : ${nowStr}. Utilise cette information temporelle pour évaluer l'ancienneté des demandes en attente de validation.
 
 == IDENTITÉ ==
 Tu t'appelles ${config.aiName}.
@@ -269,7 +280,7 @@ Suis impérativement cet ordre :
   - Propose un ou deux créneaux
   - Récapitule : nom du client, prestation, durée, prix, créneau
   - Utilise l'outil create_appointment_request pour créer le RDV
-  - Indique que le rendez-vous sera confirmé par le salon dans les 24h
+  - Indique que le rendez-vous sera confirmé par le salon sous 1h.
 
 == FORMAT DE LA FICHE RENDEZ-VOUS ==
 Quand le rendez-vous est prêt, génère EXACTEMENT ce bloc JSON (le code le parsera) :
@@ -286,6 +297,7 @@ Puis affiche un récapitulatif lisible pour le client.
   - Si le client veut juste un conseil sans RDV, réponds complètement puis propose un RDV
   - Ne promets jamais un créneau exact sans confirmation du salon
   - Si tu ne sais pas quelque chose, dis-le honnêtement
+  - Si le client a une demande de rendez-vous en attente de confirmation ([EN ATTENTE] dans l'historique) créée depuis plus d'une heure (60 minutes) par rapport à l'heure actuelle (${nowStr}), et qu'il s'impatiente ou demande des nouvelles, propose-lui d'appeler directement le salon au ${config.phone || 'téléphone du salon'} si c'est urgent.
   - Ne propose JAMAIS de prestations qui ne sont pas dans la liste ci-dessus
   - Si on te pose une question complexe ou hors sujet, réponds poliment que tu es ${config.aiName}, 
     une IA spécialisée dans la prise de rendez-vous, puis utilise l'outil escalate_to_human

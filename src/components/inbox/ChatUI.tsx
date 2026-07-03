@@ -24,6 +24,8 @@ import {
   resolveConversation,
   reactivateBotConversation,
 } from '@/actions/inbox'
+import { confirmAppointment, rejectAppointment } from '@/actions/appointments'
+import { toast } from 'sonner'
 
 // ============================================================
 // TYPES
@@ -36,13 +38,34 @@ interface Message {
   createdAt: string | Date
 }
 
+interface Client {
+  id: string
+  firstName: string
+  lastName: string
+  appointments?: {
+    id: string
+    startTime: string | Date
+    endTime: string | Date
+    status: string
+    service: {
+      name: string
+      price: number
+      duration: number
+      bufferMinutes: number
+    }
+    employee: {
+      name: string
+    }
+  }[]
+}
+
 interface Conversation {
   id: string
   channel: 'WHATSAPP' | 'INSTAGRAM' | 'MESSENGER'
   status: 'BOT' | 'HUMAN' | 'RESOLVED'
   externalId: string
-  updatedAt: string
-  client: { firstName: string; lastName: string } | null
+  updatedAt: string | Date
+  client: Client | null
   messages: Message[]
 }
 
@@ -129,7 +152,7 @@ export function ChatUI({ initialConversations, salonId }: ChatUIProps) {
                 return { ...conv, messages: conv.messages || [] }
               })
             )
-            setConversations(convs as Conversation[])
+            setConversations(convs as unknown as Conversation[])
           }
         } catch (err) {
           // Silencieux en cas d'erreur de polling
@@ -236,6 +259,54 @@ export function ChatUI({ initialConversations, salonId }: ChatUIProps) {
       )
     } catch (err) {
       console.error('Erreur réactivation bot:', err)
+    }
+  }
+
+  const [isActionPending, setIsActionPending] = useState(false)
+
+  async function handleConfirmApt(appointmentId: string) {
+    if (isActionPending) return
+    setIsActionPending(true)
+    try {
+      await confirmAppointment(appointmentId, activeConvId || undefined)
+      toast.success('Rendez-vous confirmé avec succès !')
+      
+      if (activeConvId) {
+        const freshConvs = await getConversations()
+        setConversations(freshConvs as unknown as Conversation[])
+        const msgs = await getMessages(activeConvId)
+        setConversations((prev) =>
+          prev.map((c) => (c.id === activeConvId ? { ...c, messages: JSON.parse(JSON.stringify(msgs)) } : c)) as Conversation[]
+        )
+      }
+    } catch (err) {
+      console.error('Erreur confirmation RDV:', err)
+      toast.error('Erreur lors de la confirmation du rendez-vous.')
+    } finally {
+      setIsActionPending(false)
+    }
+  }
+
+  async function handleRejectApt(appointmentId: string) {
+    if (isActionPending) return
+    setIsActionPending(true)
+    try {
+      await rejectAppointment(appointmentId, activeConvId || undefined)
+      toast.success('Rendez-vous refusé.')
+      
+      if (activeConvId) {
+        const freshConvs = await getConversations()
+        setConversations(freshConvs as unknown as Conversation[])
+        const msgs = await getMessages(activeConvId)
+        setConversations((prev) =>
+          prev.map((c) => (c.id === activeConvId ? { ...c, messages: JSON.parse(JSON.stringify(msgs)) } : c)) as Conversation[]
+        )
+      }
+    } catch (err) {
+      console.error('Erreur rejet RDV:', err)
+      toast.error('Erreur lors du rejet du rendez-vous.')
+    } finally {
+      setIsActionPending(false)
     }
   }
 
@@ -418,6 +489,50 @@ export function ChatUI({ initialConversations, salonId }: ChatUIProps) {
                 )}
               </div>
             </div>
+
+            {/* Bannière de rendez-vous en attente */}
+            {activeConv.client?.appointments && activeConv.client.appointments.length > 0 && (
+              <div className="mx-6 mt-4 p-4 rounded-2xl border border-amber-500/20 bg-amber-500/10 backdrop-blur-md flex justify-between items-center animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="flex items-start gap-3">
+                  <div className="mt-1 w-8 h-8 rounded-full bg-amber-500/20 text-amber-600 flex items-center justify-center font-bold text-sm">
+                    ⏳
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-sm text-foreground">
+                      Demande de rendez-vous en attente
+                    </h4>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {activeConv.client!.appointments![0].service.name} avec <span className="font-medium">{activeConv.client!.appointments![0].employee.name}</span> · {activeConv.client!.appointments![0].service.price} MAD
+                    </p>
+                    <p className="text-xs text-amber-600 font-medium mt-1">
+                      📅 {new Date(activeConv.client!.appointments![0].startTime).toLocaleDateString('fr-FR', {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })} ({activeConv.client!.appointments![0].service.duration} min + {activeConv.client!.appointments![0].service.bufferMinutes || 0} min retard)
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleConfirmApt(activeConv.client!.appointments![0].id)}
+                    disabled={isActionPending}
+                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors shadow-sm disabled:opacity-50"
+                  >
+                    Confirmer
+                  </button>
+                  <button
+                    onClick={() => handleRejectApt(activeConv.client!.appointments![0].id)}
+                    disabled={isActionPending}
+                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors shadow-sm disabled:opacity-50"
+                  >
+                    Refuser
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
