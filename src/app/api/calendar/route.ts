@@ -50,19 +50,20 @@ export async function GET(request: Request) {
       return new Response('Employé non trouvé ou jeton invalide', { status: 404 })
     }
 
-    // Récupérer les rendez-vous de l'employé (non annulés) à partir des 30 derniers jours
+    // Récupérer les rendez-vous du salon (non annulés) à partir des 30 derniers jours
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
     const appointments = await prisma.appointment.findMany({
       where: {
-        employeeId: employee.id,
+        salonId: employee.salonId,
         status: { not: 'CANCELLED' },
         startTime: { gte: thirtyDaysAgo }
       },
       include: {
         client: true,
-        service: true
+        service: true,
+        employee: true
       },
       orderBy: {
         startTime: 'asc'
@@ -77,7 +78,7 @@ export async function GET(request: Request) {
       'PRODID:-//SalonPro//NONSGML Calendar//FR',
       'CALSCALE:GREGORIAN',
       'METHOD:PUBLISH',
-      `X-WR-CALNAME:${escapeICSField(`Agenda - ${employee.name}`)}`,
+      `X-WR-CALNAME:${escapeICSField(`Agenda - ${employee.salon.name}`)}`,
       'X-WR-TIMEZONE:UTC'
     ]
 
@@ -86,6 +87,7 @@ export async function GET(request: Request) {
       
       const descriptionLines = [
         `Prestation : ${apt.service.name}`,
+        `Coiffeur/se : ${apt.employee.name}`,
         `Durée : ${apt.service.duration} min`,
         `Client : ${clientName}`,
         apt.client.phone ? `Téléphone client : ${apt.client.phone}` : null,
@@ -93,7 +95,7 @@ export async function GET(request: Request) {
         `Salon : ${employee.salon.name}`
       ].filter(Boolean) as string[]
 
-      const summary = `${apt.service.name} - ${clientName}`
+      const summary = `[${apt.employee.name}] ${apt.service.name} - ${clientName}`
       const description = descriptionLines.join('\n')
 
       icsLines.push('BEGIN:VEVENT')

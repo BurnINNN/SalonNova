@@ -64,6 +64,9 @@ describe('iCalendar API Route', () => {
           name: 'Coupe Homme',
           duration: 60,
         },
+        employee: {
+          name: 'Yassmine',
+        },
       },
     ]
 
@@ -80,10 +83,12 @@ describe('iCalendar API Route', () => {
     const icsContent = await response.text()
     expect(icsContent).toContain('BEGIN:VCALENDAR')
     expect(icsContent).toContain('VERSION:2.0')
-    expect(icsContent).toContain('X-WR-CALNAME:Agenda - Yassmine')
+    expect(icsContent).toContain('X-WR-CALNAME:Agenda - Salon BeColor')
     expect(icsContent).toContain('BEGIN:VEVENT')
     expect(icsContent).toContain('UID:apt_1@salonpro.com')
+    expect(icsContent).toContain('SUMMARY:[Yassmine] Coupe Homme - Sophie L.')
     expect(icsContent).toContain('DESCRIPTION:Prestation : Coupe Homme')
+    expect(icsContent).toContain('Coiffeur/se : Yassmine')
     expect(icsContent).toContain('Salon : Salon BeCol')
     expect(icsContent).toContain('END:VEVENT')
     expect(icsContent).toContain('END:VCALENDAR')
