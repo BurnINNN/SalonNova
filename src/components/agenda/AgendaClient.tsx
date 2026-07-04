@@ -1,9 +1,22 @@
 'use client'
 
 import { useState } from 'react'
-import { CalendarView } from '@/components/agenda/CalendarView'
+import dynamic from 'next/dynamic'
+import { Loader2 } from 'lucide-react'
 import { NewAppointmentDialog } from '@/components/agenda/NewAppointmentDialog'
 import { AppointmentDetailsModal } from '@/components/agenda/AppointmentDetailsModal'
+
+const CalendarView = dynamic(() => import('@/components/agenda/CalendarView').then((mod) => mod.CalendarView), {
+  ssr: false,
+  loading: () => (
+    <div className="h-full min-h-[500px] flex items-center justify-center bg-background/40 backdrop-blur-md rounded-3xl border border-border/50 shadow-inner">
+      <div className="flex flex-col items-center gap-3">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <span className="text-xs font-semibold text-muted-foreground tracking-wide uppercase">Chargement du calendrier...</span>
+      </div>
+    </div>
+  )
+})
 
 interface Client {
   id: string

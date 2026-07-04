@@ -361,12 +361,31 @@ export async function getStockDashboardMetrics(salonId: string) {
 export async function getLowAndRuptureProducts(salonId: string) {
   const products = await prisma.product.findMany({
     where: { salonId, isActive: true },
+    select: {
+      id: true,
+      name: true,
+      brand: true,
+      currentStock: true,
+      minStock: true,
+      unit: true,
+    },
     orderBy: { currentStock: 'asc' },
   })
   return {
     rupture: products.filter(p => p.currentStock <= 0),
     bas:     products.filter(p => p.currentStock > 0 && p.currentStock <= p.minStock),
   }
+}
+
+export async function getLowAndRuptureProductsCount(salonId: string): Promise<number> {
+  const products = await prisma.product.findMany({
+    where: { salonId, isActive: true },
+    select: {
+      currentStock: true,
+      minStock: true,
+    },
+  })
+  return products.filter(p => p.currentStock <= p.minStock).length
 }
 
 // ── LIEN PRESTATION ↔ PRODUITS ─────────────────────────────────────────────

@@ -13,22 +13,26 @@ export function MetricCard({ label, value, sub, accent = 'blue', icon }: MetricC
     green: {
       bg: 'bg-emerald-50 dark:bg-emerald-500/10',
       text: 'text-emerald-600 dark:text-emerald-400',
-      border: 'border-emerald-300 dark:border-emerald-500/40'
+      border: 'border-emerald-300 dark:border-emerald-500/40',
+      gradient: 'from-emerald-500/20 dark:from-emerald-500/30'
     },
     orange: {
       bg: 'bg-orange-50 dark:bg-orange-500/10',
       text: 'text-orange-600 dark:text-orange-400',
-      border: 'border-orange-300 dark:border-orange-500/40'
+      border: 'border-orange-300 dark:border-orange-500/40',
+      gradient: 'from-orange-500/20 dark:from-orange-500/30'
     },
     blue: {
       bg: 'bg-blue-50 dark:bg-blue-500/10',
       text: 'text-blue-600 dark:text-blue-400',
-      border: 'border-blue-300 dark:border-blue-500/40'
+      border: 'border-blue-300 dark:border-blue-500/40',
+      gradient: 'from-blue-500/20 dark:from-blue-500/30'
     },
     purple: {
       bg: 'bg-purple-50 dark:bg-purple-500/10',
       text: 'text-purple-600 dark:text-purple-400',
-      border: 'border-purple-300 dark:border-purple-500/40'
+      border: 'border-purple-300 dark:border-purple-500/40',
+      gradient: 'from-purple-500/20 dark:from-purple-500/30'
     },
   }
 
@@ -36,8 +40,8 @@ export function MetricCard({ label, value, sub, accent = 'blue', icon }: MetricC
 
   return (
     <div className={`glass-card rounded-3xl p-6 flex flex-col gap-4 relative overflow-hidden group border-2 ${selected.border}`}>
-      {/* Decorative gradient blob */}
-      <div className={`absolute -right-8 -top-8 w-32 h-32 rounded-full blur-3xl opacity-50 transition-opacity duration-500 group-hover:opacity-80 ${selected.bg}`} />
+      {/* Decorative gradient blob using radial background gradient (avoiding blur-3xl GPU calculations) */}
+      <div className={`absolute -right-8 -top-8 w-32 h-32 bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] ${selected.gradient} to-transparent opacity-50 transition-opacity duration-500 group-hover:opacity-85 pointer-events-none`} />
       
       <div className="flex justify-between items-start z-10">
         <span className="text-sm font-semibold text-muted-foreground tracking-wide uppercase">{label}</span>

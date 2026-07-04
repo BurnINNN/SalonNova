@@ -44,7 +44,7 @@ export function Sidebar({ stockAlerts = 0 }: { stockAlerts?: number }) {
   }
 
   return (
-    <aside className={`${isCollapsed ? 'w-24' : 'w-72'} transition-all duration-300 ease-in-out flex-shrink-0 m-4 rounded-3xl glass flex flex-col shadow-sm relative z-20`}>
+    <aside className={`${isCollapsed ? 'w-24' : 'w-72'} flex-shrink-0 m-4 rounded-3xl glass flex flex-col shadow-sm relative z-20`}>
       {/* Logo Area */}
       <div className={`h-24 flex items-center justify-between ${isCollapsed ? 'px-4' : 'px-6'} border-b border-border/50`}>
         <div className="flex items-center gap-3 overflow-hidden whitespace-nowrap">
@@ -64,7 +64,7 @@ export function Sidebar({ stockAlerts = 0 }: { stockAlerts?: number }) {
       </button>
 
       {/* Navigation */}
-      <nav className={`flex-1 ${isCollapsed ? 'p-3' : 'p-6'} space-y-2 overflow-y-auto transition-all duration-300`}>
+      <nav className={`flex-1 ${isCollapsed ? 'p-3' : 'p-6'} space-y-2 overflow-y-auto`}>
         {!isCollapsed && (
           <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4 ml-2">
             Menu Principal
@@ -98,7 +98,7 @@ export function Sidebar({ stockAlerts = 0 }: { stockAlerts?: number }) {
       </nav>
 
       {/* Bottom Actions */}
-      <div className={`${isCollapsed ? 'p-3' : 'p-6'} border-t border-border/50 space-y-2 transition-all duration-300`}>
+      <div className={`${isCollapsed ? 'p-3' : 'p-6'} border-t border-border/50 space-y-2`}>
         <Link
           href="/settings/general"
           className={`w-full flex items-center ${isCollapsed ? 'justify-center p-3' : 'gap-3 p-3'} rounded-2xl transition-all duration-300 ${

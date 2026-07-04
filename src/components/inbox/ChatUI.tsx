@@ -128,6 +128,12 @@ export function ChatUI({ initialConversations, salonId }: ChatUIProps) {
   const [isSending, setIsSending] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
+  const activeConvIdRef = useRef(activeConvId)
+  activeConvIdRef.current = activeConvId
+
+  const conversationsRef = useRef(conversations)
+  conversationsRef.current = conversations
+
   const activeConv = conversations.find((c) => c.id === activeConvId)
 
   // Auto-scroll quand les messages changent
@@ -142,14 +148,47 @@ export function ChatUI({ initialConversations, salonId }: ChatUIProps) {
         try {
           const freshConversations = await getConversations()
           if (freshConversations && freshConversations.length > 0) {
-            // Charger les messages pour la conversation active
+            const currentActiveId = activeConvIdRef.current
+            const currentConvs = conversationsRef.current
+
+            // Comparaison intelligente pour éviter les re-renders et fetches inutiles
+            let hasChanged = false
+            if (freshConversations.length !== currentConvs.length) {
+              hasChanged = true
+            } else {
+              for (let i = 0; i < freshConversations.length; i++) {
+                const fresh = freshConversations[i]
+                const current = currentConvs.find(c => c.id === fresh.id)
+                if (!current) {
+                  hasChanged = true
+                  break
+                }
+                if (current.status !== fresh.status) {
+                  hasChanged = true
+                  break
+                }
+                const freshLastMsg = fresh.messages?.[0]
+                const currentLastMsg = current.messages?.[current.messages.length - 1]
+                if (freshLastMsg?.id !== currentLastMsg?.id) {
+                  hasChanged = true
+                  break
+                }
+              }
+            }
+
+            if (!hasChanged) {
+              return // Aucun changement, on évite le fetch de messages et le setConversations
+            }
+
+            // Charger les messages uniquement pour la conversation active si elle a changé
             const convs = await Promise.all(
               freshConversations.map(async (conv: any) => {
-                if (conv.id === activeConvId) {
+                if (conv.id === currentActiveId) {
                   const msgs = await getMessages(conv.id)
                   return { ...conv, messages: JSON.parse(JSON.stringify(msgs)) }
                 }
-                return { ...conv, messages: conv.messages || [] }
+                const oldConv = currentConvs.find(c => c.id === conv.id)
+                return { ...conv, messages: oldConv?.messages || conv.messages || [] }
               })
             )
             setConversations(convs as unknown as Conversation[])
@@ -161,7 +200,7 @@ export function ChatUI({ initialConversations, salonId }: ChatUIProps) {
     }, 5000)
 
     return () => clearInterval(interval)
-  }, [activeConvId])
+  }, [])
 
   // Quand on change de conversation active, charger ses messages
   useEffect(() => {

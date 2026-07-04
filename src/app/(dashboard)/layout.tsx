@@ -2,7 +2,9 @@ import { ReactNode } from 'react'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
-import { getLowAndRuptureProducts } from '@/actions/stock'
+import { getLowAndRuptureProductsCount } from '@/actions/stock'
+
+import { ThemeToggle } from '@/components/layout/ThemeToggle'
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const supabase = createClient()
@@ -12,8 +14,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   if (user) {
     const employee = await prisma.employee.findUnique({ where: { userId: user.id } })
     if (employee) {
-      const alerts = await getLowAndRuptureProducts(employee.salonId)
-      stockAlerts = alerts.rupture.length + alerts.bas.length
+      stockAlerts = await getLowAndRuptureProductsCount(employee.salonId)
     }
   }
 
@@ -42,6 +43,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
               </span>
               <span className="text-sm font-medium text-foreground">Assistant IA Actif</span>
             </div>
+            <ThemeToggle />
             <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center font-bold text-sm text-primary shadow-sm hover:bg-primary/20 transition-colors cursor-pointer">
               G
             </div>
