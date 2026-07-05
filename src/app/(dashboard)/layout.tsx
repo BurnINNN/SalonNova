@@ -1,9 +1,7 @@
 import { ReactNode } from 'react'
-import { Sidebar } from '@/components/layout/Sidebar'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { getLowAndRuptureProductsCount } from '@/actions/stock'
-import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { MobileMenuButton } from '@/components/layout/MobileMenuButton'
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
