@@ -5,7 +5,7 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import frLocale from '@fullcalendar/core/locales/fr'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 import { AppointmentBlock } from './AppointmentBlock'
 
@@ -23,6 +23,14 @@ interface CalendarViewProps {
 }
 
 export function CalendarView({ appointments, onDateClick, onEventClick }: CalendarViewProps) {
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
   
   // Custom styles for FullCalendar to match our premium beige/white theme
   useEffect(() => {
@@ -61,12 +69,16 @@ export function CalendarView({ appointments, onDateClick, onEventClick }: Calend
   }, [])
 
   return (
-    <div className="glass-card rounded-3xl p-6 h-full shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="glass-card rounded-2xl md:rounded-3xl p-3 md:p-6 h-full shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-700">
       <FullCalendar
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-        initialView="timeGridWeek"
+        initialView={isMobile ? 'timeGridDay' : 'timeGridWeek'}
         locale={frLocale}
-        headerToolbar={{
+        headerToolbar={isMobile ? {
+          left: 'prev,next',
+          center: 'title',
+          right: 'timeGridDay,dayGridMonth',
+        } : {
           left: 'prev,next today',
           center: 'title',
           right: 'dayGridMonth,timeGridWeek,timeGridDay',
@@ -76,13 +88,14 @@ export function CalendarView({ appointments, onDateClick, onEventClick }: Calend
         slotDuration="00:30:00"
         allDaySlot={false}
         events={appointments}
-        editable={true}
+        editable={!isMobile}
         selectable={true}
         dateClick={(info) => onDateClick(info.date)}
         eventClick={(info) => onEventClick(info.event.id)}
         eventContent={(eventInfo) => <AppointmentBlock eventInfo={eventInfo} />}
         height="100%"
         timeZone="local"
+        longPressDelay={300}
       />
     </div>
   )

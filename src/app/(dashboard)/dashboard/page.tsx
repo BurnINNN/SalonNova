@@ -72,7 +72,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Aperçu</h1>
         <DateRangeFilter />
       </div>
@@ -81,7 +81,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Chart */}
-        <div className="glass-card rounded-3xl p-6 h-[400px] flex flex-col">
+        <div className="glass-card rounded-3xl p-4 md:p-6 h-[300px] md:h-[400px] flex flex-col">
           <div className="flex justify-between items-center mb-6">
             <div>
               <h3 className="text-lg font-semibold tracking-tight text-foreground">Revenus de la semaine</h3>

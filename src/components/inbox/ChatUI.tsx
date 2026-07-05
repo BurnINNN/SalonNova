@@ -15,6 +15,7 @@ import {
   MessagesSquare,
   Info,
   Loader2,
+  ArrowLeft,
 } from 'lucide-react'
 import {
   getConversations,
@@ -126,6 +127,7 @@ export function ChatUI({ initialConversations, salonId }: ChatUIProps) {
   const [statusFilter, setStatusFilter] = useState<string>('ALL')
   const [isPending, startTransition] = useTransition()
   const [isSending, setIsSending] = useState(false)
+  const [mobileShowChat, setMobileShowChat] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const activeConvIdRef = useRef(activeConvId)
@@ -356,17 +358,17 @@ export function ChatUI({ initialConversations, salonId }: ChatUIProps) {
   return (
     <div className="flex h-full rounded-3xl overflow-hidden glass-card shadow-sm">
       {/* ========== SIDEBAR — Liste des conversations ========== */}
-      <div className="w-[360px] min-w-[320px] border-r border-border/50 flex flex-col bg-background/50">
+      <div className={`w-full md:w-[360px] md:min-w-[320px] border-r border-border/50 flex flex-col bg-background/50 ${mobileShowChat ? 'hidden md:flex' : 'flex'}`}>
         {/* Filtres */}
-        <div className="p-4 border-b border-border/50 space-y-3">
-          <div className="flex gap-1.5">
+        <div className="p-3 md:p-4 border-b border-border/50 space-y-2 md:space-y-3">
+          <div className="flex gap-1 md:gap-1.5 flex-wrap">
             {['ALL', 'BOT', 'HUMAN', 'RESOLVED'].map((status) => {
               const isActive = statusFilter === status
               return (
                 <button
                   key={status}
                   onClick={() => setStatusFilter(status)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all duration-200 ${
+                  className={`px-2.5 md:px-3 py-1.5 rounded-xl text-xs font-medium transition-all duration-200 touch-target ${
                     isActive
                       ? 'bg-primary text-primary-foreground shadow-sm'
                       : 'bg-secondary/50 text-muted-foreground hover:bg-secondary'
@@ -377,7 +379,7 @@ export function ChatUI({ initialConversations, salonId }: ChatUIProps) {
               )
             })}
           </div>
-          <div className="flex gap-1.5">
+          <div className="flex gap-1 md:gap-1.5 flex-wrap">
             {['ALL', 'WHATSAPP', 'INSTAGRAM', 'MESSENGER'].map((channel) => {
               const isActive = channelFilter === channel
               const cfg = channel !== 'ALL' ? channelConfig[channel as keyof typeof channelConfig] : null
@@ -385,7 +387,7 @@ export function ChatUI({ initialConversations, salonId }: ChatUIProps) {
                 <button
                   key={channel}
                   onClick={() => setChannelFilter(channel)}
-                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all duration-200 ${
+                  className={`flex items-center gap-1 px-2 md:px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all duration-200 touch-target ${
                     isActive
                       ? 'bg-primary text-primary-foreground shadow-sm'
                       : 'bg-secondary/50 text-muted-foreground hover:bg-secondary'
@@ -418,8 +420,11 @@ export function ChatUI({ initialConversations, salonId }: ChatUIProps) {
               return (
                 <div
                   key={conv.id}
-                  onClick={() => setActiveConvId(conv.id)}
-                  className={`p-4 cursor-pointer rounded-2xl transition-all duration-300 ${
+                  onClick={() => {
+                    setActiveConvId(conv.id)
+                    setMobileShowChat(true)
+                  }}
+                  className={`p-3 md:p-4 cursor-pointer rounded-2xl transition-all duration-300 touch-target ${
                     isActive
                       ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20'
                       : 'hover:bg-secondary text-foreground'
@@ -436,7 +441,7 @@ export function ChatUI({ initialConversations, salonId }: ChatUIProps) {
                       ? '📋 ' + lastMsg.content.slice(1, 50)
                       : lastMsg?.content?.slice(0, 60) || 'Nouvelle conversation'}
                   </div>
-                  <div className="mt-2.5 flex gap-2 items-center">
+                  <div className="mt-2 md:mt-2.5 flex gap-2 items-center">
                     <span
                       className={`text-[10px] px-2 py-0.5 rounded-full font-medium flex items-center gap-1 ${
                         isActive ? 'bg-primary-foreground/20' : channelCfg.bg
@@ -462,68 +467,76 @@ export function ChatUI({ initialConversations, salonId }: ChatUIProps) {
       </div>
 
       {/* ========== ZONE DE MESSAGES ========== */}
-      <div className="flex-1 flex flex-col bg-background/30 relative">
+      <div className={`flex-1 flex flex-col bg-background/30 relative ${mobileShowChat ? 'flex' : 'hidden md:flex'}`}>
         {activeConv ? (
           <>
             {/* En-tête */}
-            <div className="h-20 px-6 border-b border-border/50 flex justify-between items-center bg-background/50 backdrop-blur-md z-10">
-              <div className="flex items-center gap-4">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
+            <div className="h-14 md:h-20 px-3 md:px-6 border-b border-border/50 flex justify-between items-center bg-background/50 backdrop-blur-md z-10">
+              <div className="flex items-center gap-2 md:gap-4 min-w-0">
+                {/* Back button - mobile only */}
+                <button
+                  onClick={() => setMobileShowChat(false)}
+                  className="md:hidden p-1.5 -ml-1 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors touch-target flex-shrink-0"
+                  aria-label="Retour"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+                <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 ${
                   channelConfig[activeConv.channel].bg} ${channelConfig[activeConv.channel].color
                 }`}>
-                  {(() => { const Icon = channelConfig[activeConv.channel].icon; return <Icon className="w-5 h-5" /> })()}
+                  {(() => { const Icon = channelConfig[activeConv.channel].icon; return <Icon className="w-4 h-4 md:w-5 md:h-5" /> })()}
                 </div>
-                <div>
-                  <h3 className="font-semibold">{getClientName(activeConv)}</h3>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-sm md:text-base truncate">{getClientName(activeConv)}</h3>
+                  <div className="flex items-center gap-1.5 md:gap-2 text-xs text-muted-foreground">
                     <span className={`flex items-center gap-1 font-medium ${statusConfig[activeConv.status].color}`}>
                       {(() => { const Icon = statusConfig[activeConv.status].icon; return <Icon className="w-3 h-3" /> })()}
-                      {statusConfig[activeConv.status].label}
+                      <span className="hidden sm:inline">{statusConfig[activeConv.status].label}</span>
                     </span>
-                    <span>·</span>
-                    <span>{channelConfig[activeConv.channel].label}</span>
-                    <span>·</span>
-                    <span>{activeConv.messages.length} messages</span>
+                    <span className="hidden sm:inline">·</span>
+                    <span className="hidden sm:inline">{channelConfig[activeConv.channel].label}</span>
+                    <span className="hidden sm:inline">·</span>
+                    <span className="hidden sm:inline">{activeConv.messages.length} messages</span>
                   </div>
                 </div>
               </div>
 
               {/* Boutons d'action */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
                 {activeConv.status === 'BOT' && (
                   <button
                     onClick={handleTakeOver}
-                    className="flex items-center gap-1.5 bg-orange-500 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-orange-600 transition-colors shadow-sm"
+                    className="flex items-center gap-1.5 bg-orange-500 text-white px-2.5 md:px-4 py-1.5 md:py-2 rounded-xl text-xs md:text-sm font-medium hover:bg-orange-600 transition-colors shadow-sm touch-target"
                   >
                     <HandMetal className="w-4 h-4" />
-                    Prendre la main
+                    <span className="hidden sm:inline">Prendre la main</span>
                   </button>
                 )}
                 {activeConv.status === 'HUMAN' && (
                   <>
                     <button
                       onClick={handleReactivateBot}
-                      className="flex items-center gap-1.5 bg-secondary text-secondary-foreground px-3 py-2 rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors"
+                      className="flex items-center gap-1.5 bg-secondary text-secondary-foreground px-2.5 md:px-3 py-1.5 md:py-2 rounded-xl text-xs md:text-sm font-medium hover:bg-secondary/80 transition-colors touch-target"
                     >
                       <RotateCcw className="w-4 h-4" />
-                      Réactiver bot
+                      <span className="hidden sm:inline">Réactiver bot</span>
                     </button>
                     <button
                       onClick={handleResolve}
-                      className="flex items-center gap-1.5 bg-primary text-primary-foreground px-4 py-2 rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
+                      className="flex items-center gap-1.5 bg-primary text-primary-foreground px-2.5 md:px-4 py-1.5 md:py-2 rounded-xl text-xs md:text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm touch-target"
                     >
                       <CheckCircle2 className="w-4 h-4" />
-                      Résoudre
+                      <span className="hidden sm:inline">Résoudre</span>
                     </button>
                   </>
                 )}
                 {activeConv.status === 'RESOLVED' && (
                   <button
                     onClick={handleReactivateBot}
-                    className="flex items-center gap-1.5 bg-secondary text-secondary-foreground px-3 py-2 rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors"
+                    className="flex items-center gap-1.5 bg-secondary text-secondary-foreground px-2.5 md:px-3 py-1.5 md:py-2 rounded-xl text-xs md:text-sm font-medium hover:bg-secondary/80 transition-colors touch-target"
                   >
                     <RotateCcw className="w-4 h-4" />
-                    Rouvrir
+                    <span className="hidden sm:inline">Rouvrir</span>
                   </button>
                 )}
               </div>
@@ -531,41 +544,41 @@ export function ChatUI({ initialConversations, salonId }: ChatUIProps) {
 
             {/* Bannière de rendez-vous en attente */}
             {activeConv.client?.appointments && activeConv.client.appointments.length > 0 && (
-              <div className="mx-6 mt-4 p-4 rounded-2xl border border-amber-500/20 bg-amber-500/10 backdrop-blur-md flex justify-between items-center animate-in fade-in slide-in-from-top-4 duration-300">
-                <div className="flex items-start gap-3">
-                  <div className="mt-1 w-8 h-8 rounded-full bg-amber-500/20 text-amber-600 flex items-center justify-center font-bold text-sm">
+              <div className="mx-3 md:mx-6 mt-3 md:mt-4 p-3 md:p-4 rounded-2xl border border-amber-500/20 bg-amber-500/10 backdrop-blur-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="flex items-start gap-2 md:gap-3 min-w-0">
+                  <div className="mt-1 w-7 h-7 md:w-8 md:h-8 rounded-full bg-amber-500/20 text-amber-600 flex items-center justify-center font-bold text-sm flex-shrink-0">
                     ⏳
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-sm text-foreground">
+                  <div className="min-w-0">
+                    <h4 className="font-semibold text-xs md:text-sm text-foreground">
                       Demande de rendez-vous en attente
                     </h4>
-                    <p className="text-xs text-muted-foreground mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
                       {activeConv.client!.appointments![0].service.name} avec <span className="font-medium">{activeConv.client!.appointments![0].employee.name}</span> · {activeConv.client!.appointments![0].service.price} MAD
                     </p>
                     <p className="text-xs text-amber-600 font-medium mt-1">
                       📅 {new Date(activeConv.client!.appointments![0].startTime).toLocaleDateString('fr-FR', {
-                        weekday: 'long',
+                        weekday: 'short',
                         day: 'numeric',
-                        month: 'long',
+                        month: 'short',
                         hour: '2-digit',
                         minute: '2-digit'
                       })} ({activeConv.client!.appointments![0].service.duration} min + {activeConv.client!.appointments![0].service.bufferMinutes || 0} min retard)
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 w-full sm:w-auto flex-shrink-0">
                   <button
                     onClick={() => handleConfirmApt(activeConv.client!.appointments![0].id)}
                     disabled={isActionPending}
-                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors shadow-sm disabled:opacity-50"
+                    className="flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-white px-3 py-2 sm:py-1.5 rounded-xl text-xs font-semibold transition-colors shadow-sm disabled:opacity-50 touch-target"
                   >
                     Confirmer
                   </button>
                   <button
                     onClick={() => handleRejectApt(activeConv.client!.appointments![0].id)}
                     disabled={isActionPending}
-                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors shadow-sm disabled:opacity-50"
+                    className="flex-1 sm:flex-none bg-red-600 hover:bg-red-700 text-white px-3 py-2 sm:py-1.5 rounded-xl text-xs font-semibold transition-colors shadow-sm disabled:opacity-50 touch-target"
                   >
                     Refuser
                   </button>
@@ -574,15 +587,15 @@ export function ChatUI({ initialConversations, salonId }: ChatUIProps) {
             )}
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            <div className="flex-1 overflow-y-auto p-3 md:p-6 space-y-3 md:space-y-4">
               {activeConv.messages.map((msg, idx) => {
                 // Messages système
                 if (msg.role === 'SYSTEM') {
                   return (
                     <div key={msg.id} className="flex justify-center">
-                      <div className="flex items-center gap-1.5 bg-secondary/50 text-muted-foreground text-xs px-4 py-1.5 rounded-full">
-                        <Info className="w-3 h-3" />
-                        {msg.content.replace(/^\[|\]$/g, '')}
+                      <div className="flex items-center gap-1.5 bg-secondary/50 text-muted-foreground text-xs px-3 md:px-4 py-1.5 rounded-full max-w-[90%] text-center">
+                        <Info className="w-3 h-3 flex-shrink-0" />
+                        <span className="truncate">{msg.content.replace(/^\[|\]$/g, '')}</span>
                       </div>
                     </div>
                   )
@@ -591,9 +604,9 @@ export function ChatUI({ initialConversations, salonId }: ChatUIProps) {
                 const isUser = msg.role === 'USER'
                 return (
                   <div key={msg.id} className={`flex ${isUser ? 'justify-start' : 'justify-end'}`}>
-                    <div className="flex flex-col gap-1 max-w-[70%]">
+                    <div className="flex flex-col gap-1 max-w-[85%] md:max-w-[70%]">
                       <div
-                        className={`p-4 rounded-2xl text-sm leading-relaxed ${
+                        className={`p-3 md:p-4 rounded-2xl text-sm leading-relaxed ${
                           isUser
                             ? 'bg-secondary text-secondary-foreground rounded-tl-sm'
                             : 'bg-primary text-primary-foreground rounded-tr-sm shadow-md shadow-primary/10'
@@ -614,14 +627,14 @@ export function ChatUI({ initialConversations, salonId }: ChatUIProps) {
 
             {/* Zone de saisie */}
             {activeConv.status !== 'RESOLVED' && (
-              <div className="p-4 bg-background/50 backdrop-blur-md border-t border-border/50">
+              <div className="p-3 md:p-4 bg-background/50 backdrop-blur-md border-t border-border/50">
                 {activeConv.status === 'BOT' ? (
                   <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground py-2">
                     <Bot className="w-4 h-4 text-green-500" />
-                    <span>Le bot IA gère cette conversation.</span>
+                    <span className="text-xs md:text-sm">Le bot IA gère cette conversation.</span>
                     <button
                       onClick={handleTakeOver}
-                      className="text-primary font-medium hover:underline"
+                      className="text-primary font-medium hover:underline text-xs md:text-sm"
                     >
                       Prendre la main
                     </button>
@@ -635,12 +648,12 @@ export function ChatUI({ initialConversations, salonId }: ChatUIProps) {
                         value={messageInput}
                         onChange={(e) => setMessageInput(e.target.value)}
                         disabled={isSending}
-                        className="flex-1 bg-transparent border-none px-4 text-sm outline-none"
+                        className="flex-1 bg-transparent border-none px-3 md:px-4 text-sm outline-none"
                       />
                       <button
                         type="submit"
                         disabled={!messageInput.trim() || isSending}
-                        className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground hover:scale-105 transition-transform shadow-sm disabled:opacity-50 disabled:hover:scale-100"
+                        className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground hover:scale-105 transition-transform shadow-sm disabled:opacity-50 disabled:hover:scale-100 touch-target"
                       >
                         {isSending ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -655,10 +668,10 @@ export function ChatUI({ initialConversations, salonId }: ChatUIProps) {
             )}
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground">
-            <MessageSquareText className="w-16 h-16 mb-4 text-border" />
-            <p className="text-lg font-medium mb-1">Aucune conversation sélectionnée</p>
-            <p className="text-sm">Choisissez une conversation dans la liste pour commencer</p>
+          <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-4">
+            <MessageSquareText className="w-12 h-12 md:w-16 md:h-16 mb-4 text-border" />
+            <p className="text-base md:text-lg font-medium mb-1">Aucune conversation sélectionnée</p>
+            <p className="text-xs md:text-sm text-center">Choisissez une conversation dans la liste pour commencer</p>
           </div>
         )}
       </div>

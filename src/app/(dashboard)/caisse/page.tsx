@@ -58,7 +58,7 @@ export default async function CaissePage({
 
   return (
     <div className="h-[calc(100vh-2rem)] flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Caisse
@@ -67,7 +67,7 @@ export default async function CaissePage({
             {activeSession ? 'Session de caisse ouverte' : 'Caisse fermée — Veuillez ouvrir la caisse pour encaisser'}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <Dialog>
             <DialogTrigger render={<Button variant="outline" />}>
               <History className="w-4 h-4 mr-2" /> Historique du jour

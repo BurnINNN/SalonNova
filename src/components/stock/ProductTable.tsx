@@ -38,8 +38,8 @@ export function ProductTable({ products, showArchived = false }: ProductTablePro
               <span className="text-xs text-slate-400">({catProducts.length})</span>
             </div>
 
-            <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-              <table className="w-full text-sm">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-x-auto -mx-1 md:mx-0">
+              <table className="w-full text-sm min-w-[600px]">
                 <thead className="bg-slate-50 dark:bg-slate-800/60">
                   <tr>
                     <th className="text-left px-4 py-2.5 font-medium text-slate-600 dark:text-slate-300">Produit</th>

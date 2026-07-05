@@ -87,11 +87,11 @@ export function AgendaClient({
 
   return (
     <div className="h-full flex flex-col pb-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Agenda Intelligent</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 md:mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">Agenda Intelligent</h1>
           <select 
-            className="bg-background border border-border rounded-xl px-3 py-1.5 text-sm font-medium focus:ring-ring outline-none"
+            className="bg-background border border-border rounded-xl px-3 py-2 text-sm font-medium focus:ring-ring outline-none touch-target"
             value={selectedEmployee}
             onChange={(e) => setSelectedEmployee(e.target.value)}
           >
@@ -106,12 +106,12 @@ export function AgendaClient({
             setSelectedDate(new Date())
             setIsNewDialogOpen(true)
           }}
-          className="bg-primary text-primary-foreground px-4 py-2 rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
+          className="w-full sm:w-auto bg-primary text-primary-foreground px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm touch-target"
         >
           + Nouveau Rendez-vous
         </button>
       </div>
-      <div className="flex-1 min-h-[600px]">
+      <div className="flex-1 min-h-[350px] md:min-h-[600px]">
         <CalendarView
           appointments={filteredAppointments}
           onDateClick={handleDateClick}

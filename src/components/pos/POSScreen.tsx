@@ -166,10 +166,10 @@ export function POSScreen({
 
   if (!activeSession) {
     return (
-      <div className="flex flex-col items-center justify-center h-full min-h-[400px] gap-4 text-center p-8 bg-card rounded-3xl border border-border/50">
-        <h2 className="text-2xl font-semibold">Caisse fermée</h2>
-        <p className="text-muted-foreground max-w-md">Vous devez ouvrir une session de caisse pour commencer à encaisser les paiements de la journée.</p>
-        <div className="flex items-center gap-2 mt-4">
+      <div className="flex flex-col items-center justify-center h-full min-h-[400px] gap-4 text-center p-4 md:p-8 bg-card rounded-3xl border border-border/50">
+        <h2 className="text-xl md:text-2xl font-semibold">Caisse fermée</h2>
+        <p className="text-muted-foreground max-w-md text-sm md:text-base">Vous devez ouvrir une session de caisse pour commencer à encaisser les paiements de la journée.</p>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-4 w-full sm:w-auto">
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">DH</span>
             <input 
@@ -209,10 +209,10 @@ export function POSScreen({
 
       {/* Barre d'action basse pour ouvrir la modale de paiement */}
       {lines.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 lg:left-auto lg:right-10 lg:-translate-x-0 z-40">
+        <div className="fixed bottom-4 md:bottom-6 left-4 right-4 md:left-auto md:right-10 z-40 flex justify-center md:justify-end">
           <Button 
             size="lg" 
-            className="rounded-full shadow-xl px-8 py-6 text-lg animate-in slide-in-from-bottom-8 gap-2"
+            className="rounded-full shadow-xl px-8 py-6 text-lg animate-in slide-in-from-bottom-8 gap-2 w-full md:w-auto"
             onClick={() => setIsPaymentModalOpen(true)}
           >
             <CheckCircle2 className="w-6 h-6" />

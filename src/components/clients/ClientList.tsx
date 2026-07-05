@@ -81,7 +81,7 @@ export function ClientList({ clients, salonId }: { clients: ClientData[]; salonI
   return (
     <div className="space-y-4">
       {/* Search + Add */}
-      <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -91,7 +91,7 @@ export function ClientList({ clients, salonId }: { clients: ClientData[]; salonI
             className="pl-10 rounded-xl"
           />
         </div>
-        <Button onClick={() => setIsDialogOpen(true)} className="rounded-xl shadow-sm">
+        <Button onClick={() => setIsDialogOpen(true)} className="rounded-xl shadow-sm w-full sm:w-auto touch-target">
           <UserPlus className="w-4 h-4 mr-2" />
           Nouveau client
         </Button>

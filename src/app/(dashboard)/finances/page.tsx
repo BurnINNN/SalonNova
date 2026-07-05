@@ -40,7 +40,7 @@ export default async function FinancesPage({ searchParams }: { searchParams: { r
   const monthName = format(new Date(), 'MMMM yyyy', { locale: fr })
 
   return (
-    <div className="p-6 space-y-6 print:p-0 print:space-y-4 print:bg-white print:text-black">
+    <div className="p-4 md:p-6 space-y-6 print:p-0 print:space-y-4 print:bg-white print:text-black">
       {/* Styles d'impression en ligne pour forcer la propreté du PDF */}
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
@@ -56,7 +56,7 @@ export default async function FinancesPage({ searchParams }: { searchParams: { r
         <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
           Rapports & Finances
         </h1>
-        <div className="flex gap-3 items-center">
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
           <DateRangeFilter />
           <IndirectChargeDialog salonId={salonId} />
           <PrintBilanButton salonId={salonId} />
@@ -69,7 +69,7 @@ export default async function FinancesPage({ searchParams }: { searchParams: { r
           <p className="text-lg text-slate-500 capitalize">{monthName}</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <MetricCard label="Chiffre d'Affaires" value={`${data.ca.toFixed(0)} MAD`} accent="green" />
           <MetricCard label="Charges Globales" value={`${data.indirectCharges.toFixed(0)} MAD`} accent="orange" />
         </div>

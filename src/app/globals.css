@@ -16,6 +16,79 @@
   .glass-card {
     @apply bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-2 border-stone-200/80 dark:border-stone-800 shadow-md transition-[border-color,box-shadow] duration-300 hover:shadow-lg hover:border-primary/50 dark:hover:border-primary/50;
   }
+
+  /* ===== Mobile Drawer ===== */
+  .mobile-drawer-backdrop {
+    @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300;
+  }
+  .mobile-drawer-backdrop[data-state="closed"] {
+    @apply opacity-0 pointer-events-none;
+  }
+  .mobile-drawer-backdrop[data-state="open"] {
+    @apply opacity-100;
+  }
+
+  .mobile-drawer {
+    @apply fixed inset-y-0 left-0 z-50 w-[280px] transition-transform duration-300 ease-out;
+  }
+  .mobile-drawer[data-state="closed"] {
+    transform: translateX(-100%);
+  }
+  .mobile-drawer[data-state="open"] {
+    transform: translateX(0);
+  }
+
+  /* ===== Touch-friendly targets ===== */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+}
+
+/* ===== Prevent double-tap zoom on interactive elements ===== */
+button, a, select, input, textarea, [role="button"] {
+  touch-action: manipulation;
+}
+
+/* ===== FullCalendar Mobile Overrides ===== */
+@media (max-width: 767px) {
+  .fc .fc-header-toolbar {
+    flex-direction: column !important;
+    gap: 0.5rem;
+    padding-bottom: 0.75rem !important;
+  }
+  .fc .fc-toolbar-chunk {
+    display: flex;
+    justify-content: center;
+  }
+  .fc .fc-toolbar-title {
+    font-size: 1rem !important;
+  }
+  .fc .fc-button {
+    padding: 0.35rem 0.6rem !important;
+    font-size: 0.75rem !important;
+    border-radius: 0.5rem !important;
+  }
+  .fc .fc-button-group > .fc-button {
+    border-radius: 0 !important;
+  }
+  .fc .fc-button-group > .fc-button:first-child {
+    border-radius: 0.5rem 0 0 0.5rem !important;
+  }
+  .fc .fc-button-group > .fc-button:last-child {
+    border-radius: 0 0.5rem 0.5rem 0 !important;
+  }
+  .fc .fc-col-header-cell {
+    padding: 6px 0 !important;
+  }
+  .fc .fc-col-header-cell-cushion {
+    font-size: 0.7rem !important;
+  }
+  .fc .fc-timegrid-slot-label-cushion {
+    font-size: 0.65rem !important;
+  }
+  .fc .fc-scrollgrid {
+    border-radius: 0.75rem !important;
+  }
 }
 
 @layer base {
