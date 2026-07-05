@@ -36,9 +36,15 @@ interface SidebarProps {
   stockAlerts?: number
   isMobileOpen?: boolean
   onMobileClose?: () => void
+  isSuperAdmin?: boolean
 }
 
-export function Sidebar({ stockAlerts = 0, isMobileOpen = false, onMobileClose }: SidebarProps) {
+export function Sidebar({ 
+  stockAlerts = 0, 
+  isMobileOpen = false, 
+  onMobileClose,
+  isSuperAdmin = false
+}: SidebarProps) {
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
 
@@ -98,30 +104,37 @@ export function Sidebar({ stockAlerts = 0, isMobileOpen = false, onMobileClose }
             </div>
           )}
 
-          {navigation.map((item) => {
-            const active = isActive(item.href)
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center ${collapsed ? 'justify-center p-3' : 'gap-3 p-3'} rounded-2xl transition-all duration-300 relative touch-target ${
-                  active
-                    ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
-                }`}
-                title={collapsed ? item.label : undefined}
-              >
-                <item.icon className="w-5 h-5 flex-shrink-0" />
-                {!collapsed && <span className="font-medium whitespace-nowrap overflow-hidden">{item.label}</span>}
-                {item.badge && (
-                  <span className={`absolute ${collapsed ? 'right-2 top-2' : 'right-3 top-1/2 -translate-y-1/2'} w-2 h-2 rounded-full bg-destructive`} />
-                )}
-                {item.href === '/stock' && stockAlerts > 0 && (
-                  <span className={`absolute ${collapsed ? 'right-2 top-2' : 'right-3 top-1/2 -translate-y-1/2'} w-2 h-2 rounded-full bg-destructive animate-pulse`} />
-                )}
-              </Link>
-            )
-          })}
+          {(() => {
+            const navigationItems = [...navigation]
+            if (isSuperAdmin) {
+              navigationItems.push({ href: '/superadmin', label: 'Super Admin', icon: UsersRound })
+            }
+
+            return navigationItems.map((item) => {
+              const active = isActive(item.href)
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center ${collapsed ? 'justify-center p-3' : 'gap-3 p-3'} rounded-2xl transition-all duration-300 relative touch-target ${
+                    active
+                      ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
+                  }`}
+                  title={collapsed ? item.label : undefined}
+                >
+                  <item.icon className="w-5 h-5 flex-shrink-0" />
+                  {!collapsed && <span className="font-medium whitespace-nowrap overflow-hidden">{item.label}</span>}
+                  {item.badge && (
+                    <span className={`absolute ${collapsed ? 'right-2 top-2' : 'right-3 top-1/2 -translate-y-1/2'} w-2 h-2 rounded-full bg-destructive`} />
+                  )}
+                  {item.href === '/stock' && stockAlerts > 0 && (
+                    <span className={`absolute ${collapsed ? 'right-2 top-2' : 'right-3 top-1/2 -translate-y-1/2'} w-2 h-2 rounded-full bg-destructive animate-pulse`} />
+                  )}
+                </Link>
+              )
+            })
+          })()}
         </nav>
 
         {/* Bottom Actions */}

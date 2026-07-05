@@ -1,17 +1,43 @@
 'use client'
 
-import { useState, ReactNode } from 'react'
-import { Menu } from 'lucide-react'
+import { useState, ReactNode, useTransition } from 'react'
+import { Menu, Loader2 } from 'lucide-react'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
+import { switchSuperadminSalon } from '@/actions/superadmin'
+import { useRouter } from 'next/navigation'
 
 interface MobileMenuButtonProps {
   stockAlerts: number
   children: ReactNode
+  isSuperAdmin?: boolean
+  employeeName?: string
+  salons?: { id: string; name: string }[]
+  currentSalonId?: string
 }
 
-export function MobileMenuButton({ stockAlerts, children }: MobileMenuButtonProps) {
+export function MobileMenuButton({ 
+  stockAlerts, 
+  children,
+  isSuperAdmin = false,
+  employeeName = 'Gérant',
+  salons = [],
+  currentSalonId = ''
+}: MobileMenuButtonProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const [isPending, startTransition] = useTransition()
+  const router = useRouter()
+
+  const handleSalonChange = (nextSalonId: string) => {
+    startTransition(async () => {
+      const res = await switchSuperadminSalon(nextSalonId)
+      if (res.success) {
+        router.refresh()
+      } else {
+        alert(res.error || 'Erreur lors du changement de salon')
+      }
+    })
+  }
 
   return (
     <div className="flex h-screen bg-background overflow-hidden selection:bg-primary/20">
@@ -21,6 +47,7 @@ export function MobileMenuButton({ stockAlerts, children }: MobileMenuButtonProp
         stockAlerts={stockAlerts} 
         isMobileOpen={isMobileOpen} 
         onMobileClose={() => setIsMobileOpen(false)} 
+        isSuperAdmin={isSuperAdmin}
       />
 
       {/* Main Content Area */}
@@ -40,11 +67,37 @@ export function MobileMenuButton({ stockAlerts, children }: MobileMenuButtonProp
               <Menu className="w-6 h-6" />
             </button>
             <div>
-              <h1 className="text-base md:text-xl font-bold tracking-tight text-foreground">Bonjour, Gérant 👋</h1>
+              <h1 className="text-base md:text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                Bonjour, {employeeName} 👋
+                {isSuperAdmin && (
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                    Super Admin
+                  </span>
+                )}
+              </h1>
               <p className="text-muted-foreground text-xs md:text-sm mt-0.5 hidden sm:block">Voici ce qui se passe dans votre salon aujourd'hui.</p>
             </div>
           </div>
           <div className="flex items-center gap-2 md:gap-4">
+            {/* Superadmin Salon Selector */}
+            {isSuperAdmin && salons.length > 0 && (
+              <div className="flex items-center gap-1.5 glass px-3 py-1.5 rounded-full border border-stone-200/50 dark:border-stone-800 shadow-sm relative transition-all duration-300 hover:shadow-md">
+                {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin text-primary absolute left-3" />}
+                <select
+                  value={currentSalonId}
+                  disabled={isPending}
+                  onChange={(e) => handleSalonChange(e.target.value)}
+                  className={`bg-transparent border-0 text-xs md:text-sm font-semibold focus:ring-0 outline-none text-foreground cursor-pointer pr-8 ${isPending ? 'pl-5' : ''} max-w-[130px] md:max-w-[200px] truncate`}
+                >
+                  {salons.map((salon) => (
+                    <option key={salon.id} value={salon.id} className="bg-background text-foreground text-sm">
+                      {salon.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div className="hidden sm:flex items-center gap-3 glass-card px-4 py-2 rounded-full border border-stone-200/50 shadow-sm">
               <span className="relative flex h-3 w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -59,7 +112,7 @@ export function MobileMenuButton({ stockAlerts, children }: MobileMenuButtonProp
             </div>
             <ThemeToggle />
             <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center font-bold text-xs md:text-sm text-primary shadow-sm hover:bg-primary/20 transition-colors cursor-pointer">
-              G
+              {employeeName.charAt(0)}
             </div>
           </div>
         </header>
@@ -72,3 +125,4 @@ export function MobileMenuButton({ stockAlerts, children }: MobileMenuButtonProp
     </div>
   )
 }
+
