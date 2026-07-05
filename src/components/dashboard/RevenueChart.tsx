@@ -20,10 +20,15 @@ interface RevenueChartProps {
 
 export function RevenueChart({ data }: RevenueChartProps) {
   const [mounted, setMounted] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
   // Prevent hydration mismatches
   useEffect(() => {
     setMounted(true)
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
   if (!mounted) {
@@ -70,6 +75,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
           tickLine={false}
           axisLine={false}
           dy={10}
+          interval={isMobile ? 5 : 2}
         />
         <YAxis
           stroke="hsl(var(--muted-foreground))"

@@ -24,6 +24,7 @@ export interface POSLine {
 
 export function POSScreen({
   salonId,
+  salonName = 'SalonNova',
   activeSession,
   services,
   employees,
@@ -302,7 +303,7 @@ export function POSScreen({
         <TransactionReceipt 
           data={receiptData} 
           onClose={() => setReceiptData(null)} 
-          salonName="Salon Pro"
+          salonName={salonName}
         />
       )}
     </div>

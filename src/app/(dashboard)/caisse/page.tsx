@@ -19,10 +19,14 @@ export default async function CaissePage({
 
   if (!user) return null
 
-  const employee = await prisma.employee.findUnique({ where: { userId: user.id } })
+  const employee = await prisma.employee.findUnique({ 
+    where: { userId: user.id },
+    include: { salon: true }
+  })
   if (!employee) return null
 
   const salonId = employee.salonId
+  const salonName = employee.salon?.name || 'SalonNova'
 
   const [activeSession, services, employees, clients, dailyTransactions] = await Promise.all([
     getActiveSession(salonId),
@@ -87,6 +91,7 @@ export default async function CaissePage({
 
       <POSScreen 
         salonId={salonId}
+        salonName={salonName}
         activeSession={activeSession}
         services={services}
         employees={employees}

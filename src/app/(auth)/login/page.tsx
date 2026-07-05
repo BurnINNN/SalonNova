@@ -36,7 +36,7 @@ export default function LoginPage() {
           <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center text-primary-foreground shadow-xl shadow-primary/20 mb-6">
             <Scissors className="w-8 h-8" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground text-center">Salon Pro</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground text-center">SalonNova</h1>
           <p className="text-center text-sm text-muted-foreground mt-2">
             L'excellence à portée de clic
           </p>

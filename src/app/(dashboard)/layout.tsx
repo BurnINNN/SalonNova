@@ -30,7 +30,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         let salon = await prisma.salon.findFirst()
         if (!salon) {
           salon = await prisma.salon.create({
-            data: { name: 'Salon Pro', slug: 'salon-pro', settings: {} }
+            data: { name: 'SalonNova', slug: 'salon-nova', settings: {} }
           })
         }
         employee = await prisma.employee.create({

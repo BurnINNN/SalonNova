@@ -81,13 +81,13 @@ export async function getUpcomingAppointments(salonId: string, limit: number = 5
 
 export async function getWeeklyRevenue(salonId: string) {
   const now = toZonedTime(new Date(), TIMEZONE)
-  const sevenDaysAgo = subDays(now, 6)
-  sevenDaysAgo.setHours(0, 0, 0, 0)
+  const thirtyDaysAgo = subDays(now, 29)
+  thirtyDaysAgo.setHours(0, 0, 0, 0)
   
   const transactions = await prisma.transaction.findMany({
     where: {
       salonId,
-      createdAt: { gte: sevenDaysAgo },
+      createdAt: { gte: thirtyDaysAgo },
       cancelledAt: null
     },
     select: {
@@ -98,20 +98,18 @@ export async function getWeeklyRevenue(salonId: string) {
   
   const dataMap = new Map<string, number>()
   
-  // Initialize map with last 7 days
-  for (let i = 6; i >= 0; i--) {
+  // Initialize map with last 30 days
+  for (let i = 29; i >= 0; i--) {
     const d = subDays(now, i)
-    const label = d.toLocaleDateString('fr-FR', { weekday: 'short' })
-    const cleanLabel = label.charAt(0).toUpperCase() + label.slice(1, 3).replace('.', '')
-    dataMap.set(cleanLabel, 0)
+    const label = d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
+    dataMap.set(label, 0)
   }
   
   transactions.forEach(t => {
     const zonedCreated = toZonedTime(t.createdAt, TIMEZONE)
-    const label = zonedCreated.toLocaleDateString('fr-FR', { weekday: 'short' })
-    const cleanLabel = label.charAt(0).toUpperCase() + label.slice(1, 3).replace('.', '')
-    if (dataMap.has(cleanLabel)) {
-      dataMap.set(cleanLabel, dataMap.get(cleanLabel)! + t.totalAmount)
+    const label = zonedCreated.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
+    if (dataMap.has(label)) {
+      dataMap.set(label, dataMap.get(label)! + t.totalAmount)
     }
   })
   

@@ -67,15 +67,7 @@ export function MobileMenuButton({
               <Menu className="w-6 h-6" />
             </button>
             <div>
-              <h1 className="text-base md:text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-                Bonjour, {employeeName} 👋
-                {isSuperAdmin && (
-                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                    Super Admin
-                  </span>
-                )}
-              </h1>
-              <p className="text-muted-foreground text-xs md:text-sm mt-0.5 hidden sm:block">Voici ce qui se passe dans votre salon aujourd'hui.</p>
+              <p className="text-muted-foreground text-xs md:text-sm mt-0.5">Voici ce qui se passe dans votre salon aujourd'hui.</p>
             </div>
           </div>
           <div className="flex items-center gap-2 md:gap-4">

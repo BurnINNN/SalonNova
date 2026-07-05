@@ -59,15 +59,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
     totalAppointments: 20
   }
 
-  const fallbackWeeklyRevenue = [
-    { day: 'Lun', revenue: 1600 },
-    { day: 'Mar', revenue: 2800 },
-    { day: 'Mer', revenue: 1800 },
-    { day: 'Jeu', revenue: 3600 },
-    { day: 'Ven', revenue: 2600 },
-    { day: 'Sam', revenue: 3200 },
-    { day: 'Dim', revenue: 2000 },
-  ]
+  const fallbackWeeklyRevenue = Array.from({ length: 30 }, (_, i) => {
+    const d = subDays(new Date(), 29 - i)
+    return {
+      day: d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
+      revenue: Math.floor(Math.random() * 2500) + 1000
+    }
+  })
   const displayWeeklyRevenue = employee ? weeklyRevenue : fallbackWeeklyRevenue
 
   return (
@@ -84,14 +82,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
         <div className="glass-card rounded-3xl p-4 md:p-6 h-[300px] md:h-[400px] flex flex-col">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h3 className="text-lg font-semibold tracking-tight text-foreground">Revenus de la semaine</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">Évolution des encaissements sur les 7 derniers jours</p>
+              <h3 className="text-lg font-semibold tracking-tight text-foreground">Revenus du mois</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">Évolution des encaissements sur les 30 derniers jours</p>
             </div>
             <select className="bg-transparent border border-border rounded-xl px-3 py-1 text-sm font-medium focus:ring-ring outline-none text-foreground">
-              <option>7 derniers jours</option>
+              <option>30 derniers jours</option>
             </select>
           </div>
-          <div className="flex-1 min-h-[250px] pt-4">
+          <div className="flex-1 min-h-0 h-full w-full pt-4">
             <RevenueChart data={displayWeeklyRevenue} />
           </div>
         </div>

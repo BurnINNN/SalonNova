@@ -73,7 +73,7 @@ export function Sidebar({
             <div className="w-10 h-10 rounded-full bg-primary flex-shrink-0 flex items-center justify-center text-primary-foreground shadow-md shadow-primary/20">
               <Scissors className="w-5 h-5" />
             </div>
-            {!collapsed && <h2 className="text-xl font-semibold tracking-tight text-foreground transition-opacity duration-300">Salon Pro</h2>}
+            {!collapsed && <h2 className="text-xl font-semibold tracking-tight text-foreground transition-opacity duration-300">SalonNova</h2>}
           </div>
           {/* Close button on mobile */}
           {isMobile && onMobileClose && (

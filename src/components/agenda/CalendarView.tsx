@@ -77,11 +77,17 @@ export function CalendarView({ appointments, onDateClick, onEventClick }: Calend
         headerToolbar={isMobile ? {
           left: 'prev,next',
           center: 'title',
-          right: 'timeGridDay,dayGridMonth',
+          right: 'timeGridDay,timeGridWeek,dayGridMonth',
         } : {
           left: 'prev,next today',
           center: 'title',
           right: 'dayGridMonth,timeGridWeek,timeGridDay',
+        }}
+        buttonText={{
+          today: "Aujourd'hui",
+          month: isMobile ? 'M' : 'Mois',
+          week: isMobile ? 'S' : 'Semaine',
+          day: isMobile ? 'J' : 'Jour',
         }}
         slotMinTime="08:00:00"
         slotMaxTime="20:00:00"

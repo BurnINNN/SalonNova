@@ -32,12 +32,12 @@ async function main() {
   console.log("2. Création du salon et de l'employé dans Prisma...")
   
   // Vérifie si le salon existe déjà
-  let salon = await prisma.salon.findUnique({ where: { slug: 'salon-pro' } })
+  let salon = await prisma.salon.findFirst()
   if (!salon) {
     salon = await prisma.salon.create({
       data: {
-        name: 'Salon Pro',
-        slug: 'salon-pro',
+        name: 'SalonNova',
+        slug: 'salon-nova',
         settings: {},
       }
     })

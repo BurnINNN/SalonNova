@@ -18,7 +18,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Salon Pro",
+  title: "SalonNova",
   description: "L'excellence à portée de clic",
 };
 
