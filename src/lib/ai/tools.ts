@@ -389,7 +389,12 @@ export async function handleProposeAppointment(
 
     // 5. Trouver des créneaux libres (logique simplifiée)
     const availableSlots: { date: string; time: string; employeeName?: string }[] = []
-    const serviceDuration = service.duration + (service.bufferMinutes || 0)
+
+    const salon = await prisma.salon.findUnique({ where: { id: salonId } })
+    const settings = salon?.settings ? (typeof salon.settings === 'string' ? JSON.parse(salon.settings) : salon.settings) : {}
+    const delayMargin = Number((settings as any)?.delayMargin) || 0
+
+    const serviceDuration = service.duration + (service.bufferMinutes || 0) + delayMargin
 
     // Parcourir les jours
     const currentDate = new Date(searchStart)
@@ -518,7 +523,12 @@ export async function handleCreateAppointmentRequest(
     // 4. Calculer l'heure de fin
     const startTime = new Date(args.startTime)
     const endTime = new Date(startTime)
-    endTime.setMinutes(endTime.getMinutes() + service.duration + (service.bufferMinutes || 0))
+
+    const salon = await prisma.salon.findUnique({ where: { id: salonId } })
+    const settings = salon?.settings ? (typeof salon.settings === 'string' ? JSON.parse(salon.settings) : salon.settings) : {}
+    const delayMargin = Number((settings as any)?.delayMargin) || 0
+
+    endTime.setMinutes(endTime.getMinutes() + service.duration + (service.bufferMinutes || 0) + delayMargin)
 
     // 5. Trouver le premier coiffeur sans conflit
     let assignedEmployee = null

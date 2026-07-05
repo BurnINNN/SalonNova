@@ -20,6 +20,7 @@ const SalonSettingsSchema = z.object({
   aiName: z.string().optional(),
   aiTone: z.string().default('chaleureux et professionnel'),
   hairCareRules: z.string().optional(),
+  delayMargin: z.coerce.number().default(0),
 })
 
 const UpdateSalonSchema = z.object({
@@ -44,6 +45,7 @@ export async function getSalon(id: string) {
     llmProvider: 'gemini',
     language: 'français',
     aiTone: 'chaleureux et professionnel',
+    delayMargin: 0,
   }
   
   try {

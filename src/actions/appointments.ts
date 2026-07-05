@@ -68,7 +68,13 @@ export async function createAppointment(
 
   const service = await prisma.service.findUnique({ where: { id: data.serviceId } })
   if (!service) throw new Error('Prestation introuvable')
-  const totalDuration = service.duration + (service.bufferMinutes || 0)
+
+  // Récupérer la marge de retard depuis les réglages du salon
+  const salon = await prisma.salon.findUnique({ where: { id: data.salonId } })
+  const settings = salon?.settings ? (typeof salon.settings === 'string' ? JSON.parse(salon.settings) : salon.settings) : {}
+  const delayMargin = Number((settings as any)?.delayMargin) || 0
+
+  const totalDuration = service.duration + (service.bufferMinutes || 0) + delayMargin
   const startTime = new Date(data.startTime)
   const endTime = addMinutes(startTime, totalDuration)
 
@@ -109,7 +115,13 @@ export async function updateAppointment(
       ? await prisma.service.findUnique({ where: { id: serviceId } })
       : existing.service
     if (!service) throw new Error('Prestation introuvable')
-    const totalDuration = service.duration + (service.bufferMinutes || 0)
+
+    // Récupérer la marge de retard depuis les réglages du salon
+    const salon = await prisma.salon.findUnique({ where: { id: existing.salonId } })
+    const settings = salon?.settings ? (typeof salon.settings === 'string' ? JSON.parse(salon.settings) : salon.settings) : {}
+    const delayMargin = Number((settings as any)?.delayMargin) || 0
+
+    const totalDuration = service.duration + (service.bufferMinutes || 0) + delayMargin
     endTime = addMinutes(newStart, totalDuration)
 
     const hasConflict = await checkConflict(

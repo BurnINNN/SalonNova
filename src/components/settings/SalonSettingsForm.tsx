@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { updateSalon, UpdateSalonInput, SalonSettingsType } from '@/actions/salon'
-import { Save, Store, Globe, MessageCircle, Bot, MapPin } from 'lucide-react'
+import { Save, Store, Globe, MessageCircle, Bot, MapPin, Clock } from 'lucide-react'
 
 // Local schema matching the server schema
 const SettingsFormSchema = z.object({
@@ -27,6 +27,7 @@ const SettingsFormSchema = z.object({
     aiName: z.string().optional(),
     aiTone: z.string().default('chaleureux et professionnel'),
     hairCareRules: z.string().optional(),
+    delayMargin: z.coerce.number().default(0),
   })
 })
 
@@ -66,6 +67,7 @@ export function SalonSettingsForm({ salon }: SalonSettingsFormProps) {
         aiName: salon.settings.aiName || '',
         aiTone: salon.settings.aiTone || 'chaleureux et professionnel',
         hairCareRules: salon.settings.hairCareRules || '',
+        delayMargin: salon.settings.delayMargin || 0,
       },
     },
   })
@@ -183,6 +185,36 @@ export function SalonSettingsForm({ salon }: SalonSettingsFormProps) {
               <option value="Europe/Paris">Europe/Paris</option>
               <option value="America/New_York">America/New_York</option>
             </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Règles des Prestations & Retard */}
+      <div className="glass-card p-6 space-y-4">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+            <Clock className="w-4 h-4" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold">Règles des Prestations & Retard</h2>
+            <p className="text-sm text-muted-foreground">Définissez les marges de sécurité pour la planification des rendez-vous.</p>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Marge de retard / sécurité (minutes)</label>
+            <input
+              type="number"
+              {...form.register('settings.delayMargin')}
+              className={inputClass}
+              placeholder="Ex: 15"
+              min="0"
+              step="5"
+            />
+            <p className="text-xs text-muted-foreground">
+              Cette marge est ajoutée automatiquement à la durée de chaque prestation pour bloquer un créneau plus large (ex: coupe de 30 min + 15 min de marge = 45 min réservées). Utilisé pour la prise de RDV manuelle et par l'IA.
+            </p>
           </div>
         </div>
       </div>
