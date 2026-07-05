@@ -44,9 +44,10 @@ export default async function FinancesPage({ searchParams }: { searchParams: { r
       {/* Styles d'impression en ligne pour forcer la propreté du PDF */}
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
-          body * { visibility: hidden; }
-          #printable-bilan, #printable-bilan * { visibility: visible; }
-          #printable-bilan { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; }
+          body:not(.printing-multi-month) * { visibility: hidden; }
+          body:not(.printing-multi-month) #printable-bilan, 
+          body:not(.printing-multi-month) #printable-bilan * { visibility: visible; }
+          body:not(.printing-multi-month) #printable-bilan { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; }
           .no-print { display: none !important; }
           .glass-card { border: 1px solid #ccc !important; box-shadow: none !important; background: transparent !important; }
         }

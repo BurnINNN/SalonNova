@@ -35,6 +35,7 @@ export function POSScreen({
   const [lines, setLines] = useState<POSLine[]>([])
   const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'CARD' | null>(null)
   const [amountPaid, setAmountPaid] = useState<number>(0)
+  const [realAmount, setRealAmount] = useState<number>(0)
   
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [receiptData, setReceiptData] = useState<any>(null)
@@ -77,7 +78,15 @@ export function POSScreen({
   }, [selectedClient])
 
   const totalAmount = useMemo(() => lines.reduce((acc, line) => acc + line.totalPrice, 0), [lines])
-  const changeGiven = useMemo(() => paymentMethod === 'CASH' ? Math.max(0, amountPaid - totalAmount) : 0, [amountPaid, totalAmount, paymentMethod])
+  const changeGiven = useMemo(() => paymentMethod === 'CASH' ? Math.max(0, amountPaid - realAmount) : 0, [amountPaid, realAmount, paymentMethod])
+
+  // Initialize realAmount and amountPaid when the modal opens
+  useEffect(() => {
+    if (isPaymentModalOpen) {
+      setRealAmount(totalAmount)
+      setAmountPaid(totalAmount)
+    }
+  }, [isPaymentModalOpen, totalAmount])
 
   const handleAddLine = (line: POSLine) => {
     setLines([...lines, line])
@@ -104,7 +113,7 @@ export function POSScreen({
       toast.error('Choisissez un mode de paiement')
       return
     }
-    if (paymentMethod === 'CASH' && amountPaid < totalAmount) {
+    if (paymentMethod === 'CASH' && amountPaid < realAmount) {
       toast.error('Le montant payé est insuffisant')
       return
     }
@@ -114,7 +123,8 @@ export function POSScreen({
       const transaction = await createTransaction({
         salonId,
         totalAmount,
-        amountPaid: paymentMethod === 'CASH' ? amountPaid : totalAmount,
+        amountPaid: paymentMethod === 'CASH' ? amountPaid : realAmount,
+        changeGiven,
         paymentMethod,
         clientId: selectedClient?.id,
         employeeId: selectedEmployee?.id,
@@ -228,24 +238,60 @@ export function POSScreen({
             <DialogTitle>Finaliser l'encaissement</DialogTitle>
           </DialogHeader>
           <div className="space-y-6 py-4">
-            <div className="bg-muted/30 p-4 rounded-xl flex justify-between items-center">
-              <span className="font-semibold text-muted-foreground">Total à payer</span>
-              <span className="text-3xl font-bold text-primary">{totalAmount} DH</span>
+            <div className="bg-muted/30 p-4 rounded-xl space-y-3">
+              <div className="flex justify-between items-center text-sm text-muted-foreground border-b border-border/50 pb-2">
+                <span>Montant de la prestation</span>
+                <span className="font-semibold">{totalAmount} DH</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="font-semibold text-foreground">Montant réel payé</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={totalAmount}
+                    value={realAmount || ''}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value) || 0
+                      setRealAmount(val)
+                      if (paymentMethod === 'CASH' && amountPaid < val) {
+                        setAmountPaid(val)
+                      } else if (paymentMethod === 'CARD') {
+                        setAmountPaid(val)
+                      }
+                    }}
+                    onBlur={() => {
+                      if (realAmount < totalAmount) {
+                        setRealAmount(totalAmount)
+                        if (paymentMethod === 'CARD' || amountPaid < totalAmount) {
+                          setAmountPaid(totalAmount)
+                        }
+                      }
+                    }}
+                    className="w-28 text-right font-bold text-xl bg-transparent border-b border-primary focus:outline-none text-primary pr-1 focus:ring-0"
+                  />
+                  <span className="font-bold text-primary text-xl">DH</span>
+                </div>
+              </div>
             </div>
 
             <PaymentMethodSelector 
               paymentMethod={paymentMethod}
-              setPaymentMethod={setPaymentMethod}
+              setPaymentMethod={(method) => {
+                setPaymentMethod(method)
+                if (method === 'CARD') {
+                  setAmountPaid(realAmount)
+                }
+              }}
               amountPaid={amountPaid}
               setAmountPaid={setAmountPaid}
-              totalAmount={totalAmount}
+              totalAmount={realAmount}
               changeGiven={changeGiven}
             />
 
             <CheckoutButton 
-              totalAmount={totalAmount}
+              totalAmount={realAmount}
               onCheckout={handleCheckout}
-              disabled={lines.length === 0 || !paymentMethod || (paymentMethod === 'CASH' && amountPaid < totalAmount)}
+              disabled={lines.length === 0 || !paymentMethod || (paymentMethod === 'CASH' && amountPaid < realAmount)}
               isSubmitting={isSubmitting}
             />
           </div>

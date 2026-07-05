@@ -15,6 +15,7 @@ export const CreateTransactionSchema = z.object({
   salonId: z.string(),
   totalAmount: z.number().min(0),
   amountPaid: z.number().min(0),
+  changeGiven: z.number().optional(),
   paymentMethod: z.enum(['CASH', 'CARD']),
   clientId: z.string().optional().nullable(),
   employeeId: z.string().optional().nullable(),

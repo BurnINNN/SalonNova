@@ -7,8 +7,10 @@ import { CreateTransactionSchema, type CreateTransactionInput } from '@/schemas/
 export async function createTransaction(input: CreateTransactionInput) {
   const data = CreateTransactionSchema.parse(input)
 
-  // Calcul automatique de la monnaie
-  const changeGiven = data.paymentMethod === 'CASH' ? Math.max(0, data.amountPaid - data.totalAmount) : 0
+  // Calcul automatique de la monnaie (si non fourni explicitement)
+  const changeGiven = data.changeGiven !== undefined
+    ? data.changeGiven
+    : (data.paymentMethod === 'CASH' ? Math.max(0, data.amountPaid - data.totalAmount) : 0)
 
   const transaction = await prisma.$transaction(async (tx) => {
     // Créer la transaction
