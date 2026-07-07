@@ -14,6 +14,8 @@ export async function processMetaEvent(body: any) {
       await processInstagramEvent(body)
     } else if (body.object === 'page') {
       await processMessengerEvent(body)
+    } else if (body.object === 'whatsapp_business_account') {
+      await processWhatsAppEvent(body)
     } else {
       console.log('[WEBHOOK] Type d\'événement non géré:', body.object)
     }
@@ -177,6 +179,112 @@ async function processMessengerEvent(body: any) {
 }
 
 // ============================================================
+// WHATSAPP (OFFICIEL CLOUD API)
+// ============================================================
+
+async function processWhatsAppEvent(body: any) {
+  const entry = body.entry?.[0]
+  const changes = entry?.changes?.[0]
+  if (changes?.field !== 'messages') return
+
+  const value = changes.value
+  const message = value?.messages?.[0]
+  if (!message) return
+
+  const senderPhone = message.from
+  const contactName = value?.contacts?.[0]?.profile?.name || 'Client'
+  const messageId = message.id
+  const recipientPhoneId = value?.metadata?.phone_number_id
+
+  // Trouver le salon via le whatsappPhoneNumberId
+  let salon = await prisma.salon.findFirst({
+    where: {
+      settings: {
+        path: ['whatsappPhoneNumberId'],
+        equals: recipientPhoneId,
+      },
+    },
+  })
+
+  if (!salon) {
+    // Association automatique si salon unique (facilite le dev et évite les blocages)
+    const salons = await prisma.salon.findMany()
+    if (salons.length === 1) {
+      salon = salons[0]
+      const updatedSettings = {
+        ...(salon.settings as any),
+        whatsappPhoneNumberId: recipientPhoneId,
+      }
+      await prisma.salon.update({
+        where: { id: salon.id },
+        data: { settings: updatedSettings },
+      })
+      console.log(`[WHATSAPP OFFICIEL] Association automatique du phone_number_id ${recipientPhoneId} au salon unique ${salon.name}`)
+    } else {
+      console.log('[WHATSAPP OFFICIEL] Aucun salon configuré pour ce phone_number_id:', recipientPhoneId)
+      return
+    }
+  }
+
+  // Trouver ou créer le client
+  let client = await prisma.client.findFirst({
+    where: {
+      salonId: salon.id,
+      OR: [
+        { whatsappId: senderPhone },
+        { phone: senderPhone },
+        { phone: '+' + senderPhone },
+      ],
+    },
+  })
+
+  if (!client) {
+    client = await prisma.client.create({
+      data: {
+        salonId: salon.id,
+        whatsappId: senderPhone,
+        phone: '+' + senderPhone,
+        firstName: contactName,
+        lastName: '',
+      },
+    })
+  } else if (!client.whatsappId) {
+    await prisma.client.update({
+      where: { id: client.id },
+      data: { whatsappId: senderPhone },
+    })
+  }
+
+  // Extraire le texte et l'image
+  let messageText = ''
+  let imageMediaId: string | null = null
+
+  if (message.type === 'text') {
+    messageText = message.text?.body || ''
+  } else if (message.type === 'image') {
+    imageMediaId = message.image?.id || null
+    messageText = message.image?.caption || 'Voici une photo de mes cheveux'
+  } else {
+    console.log('[WHATSAPP OFFICIEL] Type de message non supporté dans le processeur:', message.type)
+    return
+  }
+
+  if (!messageText && !imageMediaId) return
+
+  await handleIncomingMessage({
+    salonId: salon.id,
+    channel: 'WHATSAPP',
+    externalId: senderPhone,
+    messageText,
+    externalMessageId: messageId,
+    clientId: client.id,
+    phoneNumberId: recipientPhoneId,
+    imageMediaId,
+  })
+}
+
+
+// ============================================================
 // TRAITEMENT COMMUN — Cœur de la logique
 // ============================================================
 
@@ -213,7 +321,7 @@ async function handleIncomingMessage(params: IncomingMessageParams) {
         channel,
         externalId,
         clientId,
-        status: 'BOT',
+        status: 'HUMAN',
       },
     })
   } else if (clientId && !conversation.clientId) {

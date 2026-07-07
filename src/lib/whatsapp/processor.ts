@@ -182,7 +182,7 @@ export async function handleEvolutionIncomingMessage(instanceName: string, data:
           channel: 'WHATSAPP',
           externalId: senderPhone,
           clientId: client.id,
-          status: 'BOT',
+          status: 'HUMAN',
         },
       })
     } else if (!conversation.clientId) {
