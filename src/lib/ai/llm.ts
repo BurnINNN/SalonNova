@@ -130,6 +130,11 @@ export async function callLLM(
     content: m.content,
   }))
 
+  // Le premier message de l'historique pour Gemini doit obligatoirement être un message utilisateur ('user')
+  while (formattedHistory.length > 0 && formattedHistory[0].role === 'assistant') {
+    formattedHistory.shift()
+  }
+
   const systemPrompt = getSystemPrompt(salon, clientName, clientContext)
 
   const ctx: ToolContext = {

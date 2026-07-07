@@ -100,6 +100,12 @@ export async function handleEvolutionIncomingMessage(instanceName: string, data:
       const salons = await prisma.salon.findMany()
       if (salons.length === 1) {
         salon = salons[0]
+      } else {
+        // Fallback : si plusieurs salons existent (ex: dev), on associe au salon principal BeColor / salon-pro
+        salon = salons.find(s => s.name === 'BeColor' || s.slug === 'salon-pro') || null
+      }
+
+      if (salon) {
         const updatedSettings = {
           ...(salon.settings as any),
           whatsappInstanceName: instanceName,
@@ -108,7 +114,7 @@ export async function handleEvolutionIncomingMessage(instanceName: string, data:
           where: { id: salon.id },
           data: { settings: updatedSettings },
         })
-        console.log(`[WHATSAPP] Association automatique de l'instance ${instanceName} au salon unique ${salon.name}`)
+        console.log(`[WHATSAPP] Association automatique de l'instance ${instanceName} au salon ${salon.name}`)
       } else {
         console.log('[WHATSAPP] Aucun salon configuré pour cette instance:', instanceName)
         return
@@ -176,13 +182,14 @@ export async function handleEvolutionIncomingMessage(instanceName: string, data:
     })
 
     if (!conversation) {
+      const defaultStatus = (process.env.DEFAULT_CONVERSATION_STATUS as any) || 'HUMAN'
       conversation = await prisma.conversation.create({
         data: {
           salonId: salon.id,
           channel: 'WHATSAPP',
           externalId: senderPhone,
           clientId: client.id,
-          status: 'HUMAN',
+          status: defaultStatus,
         },
       })
     } else if (!conversation.clientId) {

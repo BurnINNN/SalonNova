@@ -32,10 +32,9 @@ export async function POST(request: NextRequest) {
     return new NextResponse('Unauthorized', { status: 401 })
   }
 
-  // 2. Accusé de réception IMMÉDIAT (< 200ms)
-  // Traitement asynchrone en arrière-plan (non bloquant)
+  // 2. Traitement synchrone pour éviter le gel de la fonction serverless sur Vercel
   const body = JSON.parse(rawBody)
-  processMetaEvent(body).catch(console.error) // fire-and-forget
+  await processMetaEvent(body)
 
   return new NextResponse('OK', { status: 200 })
 }

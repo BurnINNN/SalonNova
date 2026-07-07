@@ -31,8 +31,8 @@ export async function POST(request: NextRequest) {
       console.log('Message ID :', key?.id)
       console.log('Expéditeur :', key?.remoteJid)
 
-      // Lancer le traitement de façon asynchrone (fire-and-forget)
-      handleEvolutionIncomingMessage(body.instance, data).catch(console.error)
+      // Traitement synchrone pour éviter le gel de la fonction serverless sur Vercel
+      await handleEvolutionIncomingMessage(body.instance, data)
     }
 
     return NextResponse.json({ status: 'OK' }, { status: 200 })

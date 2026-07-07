@@ -52,6 +52,12 @@ async function processInstagramEvent(body: any) {
       const salons = await prisma.salon.findMany()
       if (salons.length === 1) {
         salon = salons[0]
+      } else {
+        // Fallback : si plusieurs salons existent (ex: dev), on associe au salon principal BeColor / salon-pro
+        salon = salons.find(s => s.name === 'BeColor' || s.slug === 'salon-pro') || null
+      }
+
+      if (salon) {
         const updatedSettings = {
           ...(salon.settings as any),
           instagramPageId: recipientId,
@@ -60,7 +66,7 @@ async function processInstagramEvent(body: any) {
           where: { id: salon.id },
           data: { settings: updatedSettings },
         })
-        console.log(`[INSTAGRAM] Association automatique de l'ID de page ${recipientId} au salon unique ${salon.name}`)
+        console.log(`[INSTAGRAM] Association automatique de l'ID de page ${recipientId} au salon ${salon.name}`)
       } else {
         console.log('[INSTAGRAM] Aucun salon configuré pour cet ID:', recipientId)
         continue
@@ -129,6 +135,11 @@ async function processMessengerEvent(body: any) {
       const salons = await prisma.salon.findMany()
       if (salons.length === 1) {
         salon = salons[0]
+      } else {
+        salon = salons.find(s => s.name === 'BeColor' || s.slug === 'salon-pro') || null
+      }
+
+      if (salon) {
         const updatedSettings = {
           ...(salon.settings as any),
           messengerPageId: recipientId,
@@ -137,7 +148,7 @@ async function processMessengerEvent(body: any) {
           where: { id: salon.id },
           data: { settings: updatedSettings },
         })
-        console.log(`[MESSENGER] Association automatique de l'ID de page ${recipientId} au salon unique ${salon.name}`)
+        console.log(`[MESSENGER] Association automatique de l'ID de page ${recipientId} au salon ${salon.name}`)
       } else {
         console.log('[MESSENGER] Aucun salon configuré pour cette Page:', recipientId)
         continue
@@ -211,6 +222,11 @@ async function processWhatsAppEvent(body: any) {
     const salons = await prisma.salon.findMany()
     if (salons.length === 1) {
       salon = salons[0]
+    } else {
+      salon = salons.find(s => s.name === 'BeColor' || s.slug === 'salon-pro') || null
+    }
+
+    if (salon) {
       const updatedSettings = {
         ...(salon.settings as any),
         whatsappPhoneNumberId: recipientPhoneId,
@@ -219,7 +235,7 @@ async function processWhatsAppEvent(body: any) {
         where: { id: salon.id },
         data: { settings: updatedSettings },
       })
-      console.log(`[WHATSAPP OFFICIEL] Association automatique du phone_number_id ${recipientPhoneId} au salon unique ${salon.name}`)
+      console.log(`[WHATSAPP OFFICIEL] Association automatique du phone_number_id ${recipientPhoneId} au salon ${salon.name}`)
     } else {
       console.log('[WHATSAPP OFFICIEL] Aucun salon configuré pour ce phone_number_id:', recipientPhoneId)
       return
@@ -315,13 +331,14 @@ async function handleIncomingMessage(params: IncomingMessageParams) {
   })
 
   if (!conversation) {
+    const defaultStatus = (process.env.DEFAULT_CONVERSATION_STATUS as any) || 'HUMAN'
     conversation = await prisma.conversation.create({
       data: {
         salonId,
         channel,
         externalId,
         clientId,
-        status: 'HUMAN',
+        status: defaultStatus,
       },
     })
   } else if (clientId && !conversation.clientId) {
