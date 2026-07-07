@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { DailyKPIs } from '@/components/dashboard/DailyKPIs'
 import { UpcomingAppointments } from '@/components/dashboard/UpcomingAppointments'
 import { DailyTransactionsMini } from '@/components/dashboard/DailyTransactionsMini'
-import { DateRangeFilter } from '@/components/ui/DateRangeFilter'
+
 import { RevenueChart } from '@/components/dashboard/RevenueChart'
 import { format, subDays, startOfDay, endOfDay } from 'date-fns'
 
@@ -71,8 +71,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Aperçu</h1>
-        <DateRangeFilter />
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Aujourd'hui</h1>
       </div>
       
       <DailyKPIs metrics={displayMetrics} />
@@ -80,14 +79,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Chart */}
         <div className="glass-card rounded-3xl p-4 md:p-6 h-[300px] md:h-[400px] flex flex-col">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h3 className="text-lg font-semibold tracking-tight text-foreground">Revenus du mois</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">Évolution des encaissements sur les 30 derniers jours</p>
-            </div>
-            <select className="bg-transparent border border-border rounded-xl px-3 py-1 text-sm font-medium focus:ring-ring outline-none text-foreground">
-              <option>30 derniers jours</option>
-            </select>
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold tracking-tight text-foreground">Revenus du mois</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">Évolution des encaissements sur les 30 derniers jours</p>
           </div>
           <div className="flex-1 min-h-0 h-full w-full pt-4">
             <RevenueChart data={displayWeeklyRevenue} />

@@ -75,7 +75,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
           tickLine={false}
           axisLine={false}
           dy={10}
-          interval={isMobile ? 5 : 2}
+          tick={false}
         />
         <YAxis
           stroke="hsl(var(--muted-foreground))"

@@ -21,7 +21,7 @@ export function TransactionReceipt({ data, onClose, salonName }: TransactionRece
 Ticket de caisse - ${salonName}
 Date : ${format(new Date(data.createdAt), 'dd/MM/yyyy HH:mm', { locale: fr })}
 ------------------------
-${data.lines.map((l: any) => `${l.quantity}x ${l.label} : ${l.totalPrice} DH`).join('\n')}
+${data.lines.map((l: any) => `${l.quantity}x ${l.productId ? '[Produit] ' : ''}${l.label} : ${l.totalPrice} DH`).join('\n')}
 ------------------------
 TOTAL : ${data.totalAmount} DH
 Paiement : ${data.paymentMethod === 'CASH' ? 'Espèces' : 'Carte'}
@@ -51,8 +51,9 @@ Merci de votre visite !
           <div className="space-y-3 mb-6">
             {data.lines.map((line: any, i: number) => (
               <div key={i} className="flex justify-between">
-                <div>
-                  <span className="text-gray-500 mr-2">{line.quantity}x</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-gray-500 mr-1">{line.quantity}x</span>
+                  {line.productId && <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-sans">Produit</span>}
                   <span>{line.label}</span>
                 </div>
                 <span className="font-semibold">{line.totalPrice} DH</span>

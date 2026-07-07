@@ -99,7 +99,7 @@ export function Sidebar({
         {/* Navigation */}
         <nav className={`flex-1 ${collapsed ? 'p-3' : 'p-4 md:p-6'} space-y-1 md:space-y-2 overflow-y-auto`}>
           {!collapsed && (
-            <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4 ml-2">
+            <div className="text-xs font-medium text-muted-foreground dark:text-white/50 uppercase tracking-wider mb-4 ml-2">
               Menu Principal
             </div>
           )}
@@ -119,7 +119,7 @@ export function Sidebar({
                   className={`flex items-center ${collapsed ? 'justify-center p-3' : 'gap-3 p-3'} rounded-2xl transition-all duration-300 relative touch-target ${
                     active
                       ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
+                      : 'text-muted-foreground dark:text-white/80 hover:text-foreground dark:hover:text-white hover:bg-secondary'
                   }`}
                   title={collapsed ? item.label : undefined}
                 >
@@ -144,7 +144,7 @@ export function Sidebar({
             className={`w-full flex items-center ${collapsed ? 'justify-center p-3' : 'gap-3 p-3'} rounded-2xl transition-all duration-300 touch-target ${
               pathname.startsWith('/settings')
                 ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20'
-                : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
+                : 'text-muted-foreground dark:text-white/80 hover:text-foreground dark:hover:text-white hover:bg-secondary'
             }`}
             title={collapsed ? 'Paramètres' : undefined}
           >
@@ -152,7 +152,7 @@ export function Sidebar({
             {!collapsed && <span className="font-medium whitespace-nowrap overflow-hidden">Paramètres</span>}
           </Link>
           <button 
-            className={`w-full flex items-center ${collapsed ? 'justify-center p-3' : 'gap-3 p-3'} rounded-2xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-300 touch-target`}
+            className={`w-full flex items-center ${collapsed ? 'justify-center p-3' : 'gap-3 p-3'} rounded-2xl text-muted-foreground dark:text-white/80 hover:text-destructive hover:bg-destructive/10 transition-all duration-300 touch-target`}
             title={collapsed ? 'Déconnexion' : undefined}
           >
             <LogOut className="w-5 h-5 flex-shrink-0" />

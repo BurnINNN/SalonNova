@@ -51,7 +51,7 @@ export function CalendarView({ appointments, onDateClick, onEventClick }: Calend
       }
       .fc-theme-standard .fc-scrollgrid { border-radius: 1rem; overflow: hidden; border: 2px solid var(--fc-border-color); }
       .fc-header-toolbar { padding-bottom: 1rem; }
-      .fc-toolbar-title { font-size: 1.25rem !important; font-weight: 700 !important; color: hsl(var(--foreground)); }
+      .fc-toolbar-title { font-size: 1.25rem !important; font-weight: 700 !important; color: hsl(var(--foreground)); text-transform: capitalize; }
       .fc-button { border-radius: 0.75rem !important; text-transform: capitalize; padding: 0.5rem 1rem !important; font-weight: 500 !important; transition: all 0.2s; }
       .fc-button-primary:not(:disabled).fc-button-active, .fc-button-primary:not(:disabled):active {
         box-shadow: none !important;
@@ -59,10 +59,20 @@ export function CalendarView({ appointments, onDateClick, onEventClick }: Calend
       .fc-event { border-radius: 0.5rem; border: 2px solid rgba(0,0,0,0.15) !important; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: transform 0.2s; cursor: pointer; }
       .fc-event:hover { transform: scale(1.02); z-index: 5; border-color: rgba(0,0,0,0.3) !important; }
       .fc-col-header-cell { padding: 12px 0; background: hsl(var(--secondary) / 0.3); border-bottom: 2px solid var(--fc-border-color) !important; }
-      .fc-col-header-cell-cushion { font-weight: 600; color: hsl(var(--muted-foreground)); }
-      .fc-timegrid-slot-label-cushion { font-size: 0.75rem; color: hsl(var(--muted-foreground)); }
+      .fc-col-header-cell-cushion { font-weight: 600; color: hsl(var(--muted-foreground)); text-decoration: none !important; }
+      .fc-col-header-cell-cushion:hover { color: hsl(var(--primary)); }
+      .fc-timegrid-slot-label-cushion { font-size: 0.75rem; color: hsl(var(--muted-foreground)); font-weight: 500; }
       .fc-daygrid-day:hover { background: hsl(var(--primary) / 0.03); cursor: pointer; }
       .fc-timegrid-slot:hover { background: hsl(var(--primary) / 0.03); cursor: pointer; }
+      /* Sticky header for scrollable time grid */
+      .fc .fc-scrollgrid-section-header { position: sticky; top: 0; z-index: 10; }
+      .fc .fc-col-header { position: sticky; top: 0; z-index: 10; }
+      /* Week view: larger slot labels */
+      .fc-timeGridWeek-view .fc-timegrid-slot-label-cushion { font-size: 0.8rem; }
+      /* Month view: compact dots */
+      .fc-dayGridMonth-view .fc-daygrid-event { margin: 1px 2px !important; }
+      .fc-dayGridMonth-view .fc-event { border: none !important; box-shadow: none; background: transparent !important; }
+      .fc-dayGridMonth-view .fc-event:hover { transform: none; }
     `
     document.head.appendChild(style)
     return () => { document.head.removeChild(style) }
@@ -89,10 +99,26 @@ export function CalendarView({ appointments, onDateClick, onEventClick }: Calend
           week: isMobile ? 'S' : 'Semaine',
           day: isMobile ? 'J' : 'Jour',
         }}
+        views={{
+          timeGridWeek: {
+            slotDuration: '01:00:00',
+            slotLabelInterval: '01:00:00',
+          },
+          timeGridDay: {
+            titleFormat: { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' },
+            slotDuration: '00:30:00',
+          },
+          dayGridMonth: {
+            dayMaxEventRows: 4,
+          },
+        }}
         slotMinTime="08:00:00"
         slotMaxTime="20:00:00"
         slotDuration="00:30:00"
         allDaySlot={false}
+        navLinks={true}
+        navLinkDayClick="timeGridDay"
+        stickyHeaderDates={true}
         events={appointments}
         editable={!isMobile}
         selectable={true}

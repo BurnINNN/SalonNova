@@ -29,6 +29,7 @@ export function POSScreen({
   services,
   employees,
   clients,
+  products = [],
   initialAppointment
 }: any) {
   const [selectedClient, setSelectedClient] = useState<any>(initialAppointment?.client || null)
@@ -211,6 +212,7 @@ export function POSScreen({
         />
         <ServiceSelector 
           services={services} 
+          products={products}
           lines={lines} 
           onAddLine={handleAddLine} 
           onUpdateLine={handleUpdateLine}
@@ -220,11 +222,17 @@ export function POSScreen({
 
       {/* Barre d'action basse pour ouvrir la modale de paiement */}
       {lines.length > 0 && (
-        <div className="fixed bottom-4 md:bottom-6 left-4 right-4 md:left-auto md:right-10 z-40 flex justify-center md:justify-end">
+        <div className="fixed bottom-4 md:bottom-6 left-4 right-4 md:left-auto md:right-10 z-40 flex flex-col items-center md:items-end gap-2">
+          {!selectedClient && (
+            <p className="text-sm text-destructive font-medium bg-destructive/10 px-4 py-2 rounded-full animate-in fade-in">
+              ⚠️ Veuillez sélectionner un client (existant, passager ou nouveau)
+            </p>
+          )}
           <Button 
             size="lg" 
             className="rounded-full shadow-xl px-8 py-6 text-lg animate-in slide-in-from-bottom-8 gap-2 w-full md:w-auto"
             onClick={() => setIsPaymentModalOpen(true)}
+            disabled={!selectedClient}
           >
             <CheckCircle2 className="w-6 h-6" />
             Confirmer le panier ({totalAmount} DH)

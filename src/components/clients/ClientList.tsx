@@ -16,7 +16,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { toast } from 'sonner'
-import { Search, UserPlus, Phone, Calendar } from 'lucide-react'
+import { Search, UserPlus, Phone, Calendar, Clock, Heart, UserX, SortAsc } from 'lucide-react'
 
 interface ClientData {
   id: string
@@ -25,9 +25,17 @@ interface ClientData {
   phone: string | null
   _count: { appointments: number }
   hairProfile?: { colorFormula: string | null; hairType: string | null } | null
+  noShowCount?: number
 }
 
-export function ClientList({ clients, salonId }: { clients: ClientData[]; salonId: string }) {
+const SORT_OPTIONS = [
+  { value: 'alpha', label: 'A-Z', icon: SortAsc },
+  { value: 'recent', label: 'Récent', icon: Clock },
+  { value: 'fidelite', label: 'Fidélité', icon: Heart },
+  { value: 'noshows', label: 'No-shows', icon: UserX },
+]
+
+export function ClientList({ clients, salonId, currentSort = 'alpha' }: { clients: ClientData[]; salonId: string; currentSort?: string }) {
   const router = useRouter()
   const [search, setSearch] = useState('')
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -78,23 +86,48 @@ export function ClientList({ clients, salonId }: { clients: ClientData[]; salonI
     })
   }
 
+  function handleSortChange(sort: string) {
+    const params = new URLSearchParams()
+    if (sort !== 'alpha') params.set('sort', sort)
+    router.push(`/clients${params.toString() ? `?${params.toString()}` : ''}`)
+  }
+
   return (
     <div className="space-y-4">
-      {/* Search + Add */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Rechercher par nom, prénom ou téléphone..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 rounded-xl"
-          />
+      {/* Search + Sort + Add */}
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher par nom, prénom ou téléphone..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10 rounded-xl"
+            />
+          </div>
+          <Button onClick={() => setIsDialogOpen(true)} className="rounded-xl shadow-sm w-full sm:w-auto touch-target">
+            <UserPlus className="w-4 h-4 mr-2" />
+            Nouveau client
+          </Button>
         </div>
-        <Button onClick={() => setIsDialogOpen(true)} className="rounded-xl shadow-sm w-full sm:w-auto touch-target">
-          <UserPlus className="w-4 h-4 mr-2" />
-          Nouveau client
-        </Button>
+
+        {/* Sort filters */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium text-muted-foreground mr-1">Trier :</span>
+          {SORT_OPTIONS.map((opt) => (
+            <Button
+              key={opt.value}
+              variant={currentSort === opt.value ? 'default' : 'outline'}
+              size="sm"
+              className="rounded-full text-xs gap-1.5 h-8"
+              onClick={() => handleSortChange(opt.value)}
+            >
+              <opt.icon className="w-3.5 h-3.5" />
+              {opt.label}
+            </Button>
+          ))}
+        </div>
       </div>
 
       {/* Client Grid */}
@@ -130,9 +163,17 @@ export function ClientList({ clients, salonId }: { clients: ClientData[]; salonI
                     </p>
                   )}
                 </div>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground bg-secondary px-2 py-1 rounded-full">
-                  <Calendar className="w-3 h-3" />
-                  {client._count.appointments}
+                <div className="flex items-center gap-2">
+                  {currentSort === 'noshows' && client.noShowCount !== undefined && client.noShowCount > 0 && (
+                    <div className="flex items-center gap-1 text-xs text-destructive bg-destructive/10 px-2 py-1 rounded-full">
+                      <UserX className="w-3 h-3" />
+                      {client.noShowCount}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground bg-secondary px-2 py-1 rounded-full">
+                    <Calendar className="w-3 h-3" />
+                    {client._count.appointments}
+                  </div>
                 </div>
               </div>
               {client.hairProfile?.hairType && (

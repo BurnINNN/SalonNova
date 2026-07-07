@@ -28,7 +28,7 @@ export default async function CaissePage({
   const salonId = employee.salonId
   const salonName = employee.salon?.name || 'SalonNova'
 
-  const [activeSession, services, employees, clients, dailyTransactions] = await Promise.all([
+  const [activeSession, services, employees, clients, dailyTransactions, products] = await Promise.all([
     getActiveSession(salonId),
     getServices(salonId),
     prisma.employee.findMany({ where: { salonId } }),
@@ -49,7 +49,16 @@ export default async function CaissePage({
         }
       }
     }),
-    getDailyTransactions(salonId)
+    getDailyTransactions(salonId),
+    prisma.product.findMany({
+      where: {
+        salonId,
+        isActive: true,
+        sellingPrice: { not: null },
+        currentStock: { gt: 0 },
+      },
+      orderBy: { name: 'asc' },
+    }),
   ])
 
   let appointment = null
@@ -96,6 +105,7 @@ export default async function CaissePage({
         services={services}
         employees={employees}
         clients={clients}
+        products={products}
         initialAppointment={appointment}
       />
     </div>
