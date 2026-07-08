@@ -33,6 +33,7 @@ model Salon {
   indirectCharges      IndirectCharge[]
   integrations         Integration[]
   automations          Automation[]
+  chargeCategories     ChargeCategory[]
 
   @@map("salons")
 }
@@ -452,6 +453,7 @@ model Transaction {
   updatedAt       DateTime       @updatedAt
 
   lines           TransactionLine[]
+  chargeEntries   ServiceChargeEntry[]
 
   @@index([salonId])
   @@index([salonId, createdAt])
@@ -590,4 +592,43 @@ model Listener {
 enum ListenerType {
   MESSAGE
   SMART_AI
+}
+
+// ============================================================
+// CATÉGORIES DE CHARGES OPÉRATIONNELLES
+// ============================================================
+model ChargeCategory {
+  id          String   @id @default(cuid())
+  name        String   // ex: "Eau", "Électricité", "Serviettes jetables"
+  icon        String?  // emoji ou nom d'icône lucide
+  color       String?  // couleur hex pour dashboard
+  isActive    Boolean  @default(true)
+  salonId     String
+  salon       Salon    @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  entries     ServiceChargeEntry[]
+
+  @@index([salonId])
+  @@map("charge_categories")
+}
+
+// ============================================================
+// CHARGE PAR PRESTATION (ventilée après chaque encaissement)
+// ============================================================
+model ServiceChargeEntry {
+  id              String         @id @default(cuid())
+  estimatedAmount Float          // montant estimé pour cette prestation + catégorie
+  notes           String?
+  categoryId      String
+  category        ChargeCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  transactionId   String
+  transaction     Transaction    @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  salonId         String
+  createdAt       DateTime       @default(now())
+
+  @@index([salonId])
+  @@index([transactionId])
+  @@index([salonId, createdAt])
+  @@map("service_charge_entries")
 }

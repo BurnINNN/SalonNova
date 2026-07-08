@@ -47,6 +47,26 @@ export async function getAnalytics(salonId: string, startDate?: Date, endDate?: 
   })
   const indirectCharges = indirects.reduce((sum, c) => sum + c.amount, 0)
 
+  // 4. Charges opérationnelles (ServiceChargeEntry sur la période)
+  const operationalEntries = await prisma.serviceChargeEntry.findMany({
+    where: {
+      salonId,
+      createdAt: { gte: start, lte: end },
+    },
+    include: { category: true },
+  })
+  const operationalCharges = operationalEntries.reduce((sum, e) => sum + e.estimatedAmount, 0)
+
+  // Breakdown par catégorie de charges opérationnelles
+  const chargesByCategory: Record<string, { name: string; color: string | null; total: number }> = {}
+  operationalEntries.forEach(entry => {
+    const key = entry.categoryId
+    if (!chargesByCategory[key]) {
+      chargesByCategory[key] = { name: entry.category.name, color: entry.category.color, total: 0 }
+    }
+    chargesByCategory[key].total += entry.estimatedAmount
+  })
+
 
   // Top 5 Services & Categories
   const serviceStats: Record<string, { name: string, volume: number, revenue: number }> = {}
@@ -104,12 +124,15 @@ export async function getAnalytics(salonId: string, startDate?: Date, endDate?: 
     appointmentsCount: transactions.length,
     ca,
     directCharges,
+    operationalCharges,
     indirectCharges: indirectCharges + totalSalaries,
     totalSalaries,
     indirectsList: indirects,
     topServices,
     topClients,
-    categoryStats: Object.values(categoryStats)
+    categoryStats: Object.values(categoryStats),
+    chargesByCategory: Object.values(chargesByCategory),
+    netResult: ca - directCharges - operationalCharges - (indirectCharges + totalSalaries),
   }
 }
 

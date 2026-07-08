@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { closeCashRegisterSession, getDailySummary } from '@/actions/pos'
 import { Lock, Calculator, Banknote, CreditCard, Loader2 } from 'lucide-react'
+import { DailySummaryCard } from '@/components/caisse/DailySummaryCard'
 
 export function CashRegisterCloseDialog({ session, salonId }: any) {
   const [isOpen, setIsOpen] = useState(false)
@@ -70,6 +71,8 @@ export function CashRegisterCloseDialog({ session, salonId }: any) {
                 <p className="text-xl font-bold">{summary.totalCard} DH</p>
               </div>
             </div>
+
+            <DailySummaryCard salonId={salonId} date={session.openedAt.toISOString()} />
 
             <div className="bg-primary/5 border border-primary/20 p-4 rounded-xl space-y-3">
               <div className="flex justify-between text-sm">

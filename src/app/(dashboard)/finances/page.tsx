@@ -70,12 +70,14 @@ export default async function FinancesPage({ searchParams }: { searchParams: { r
           <p className="text-lg text-slate-500 capitalize">{monthName}</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard label="Chiffre d'Affaires" value={`${data.ca.toFixed(0)} MAD`} accent="green" />
-          <MetricCard label="Charges Globales" value={`${data.indirectCharges.toFixed(0)} MAD`} accent="orange" />
+          <MetricCard label="Charges Directes (Produits)" value={`${data.directCharges.toFixed(0)} MAD`} accent="orange" />
+          <MetricCard label="Charges Opérationnelles" value={`${data.operationalCharges.toFixed(0)} MAD`} accent="purple" />
+          <MetricCard label="Résultat Net" value={`${data.netResult.toFixed(0)} MAD`} accent={data.netResult >= 0 ? 'green' : 'orange'} />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 print:grid-cols-2">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 print:grid-cols-3">
           <div className="p-4 rounded-xl glass-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
             <h2 className="text-lg font-semibold mb-4 border-b pb-2">Récapitulatif Activité</h2>
             <ul className="space-y-3">
@@ -88,8 +90,16 @@ export default async function FinancesPage({ searchParams }: { searchParams: { r
                 <span className="font-semibold">{data.directCharges.toFixed(0)} MAD</span>
               </li>
               <li className="flex justify-between">
+                <span className="text-muted-foreground">Charges Opérationnelles</span>
+                <span className="font-semibold">{data.operationalCharges.toFixed(0)} MAD</span>
+              </li>
+              <li className="flex justify-between">
                 <span className="text-muted-foreground">Coût Salaires Fixes</span>
                 <span className="font-semibold">{data.totalSalaries.toFixed(0)} MAD</span>
+              </li>
+              <li className="flex justify-between">
+                <span className="text-muted-foreground">Charges Indirectes (Hors salaires)</span>
+                <span className="font-semibold">{Math.max(0, data.indirectCharges - data.totalSalaries).toFixed(0)} MAD</span>
               </li>
             </ul>
           </div>
@@ -104,6 +114,27 @@ export default async function FinancesPage({ searchParams }: { searchParams: { r
                   <li key={c.name} className="flex justify-between">
                     <span className="text-muted-foreground">{c.name} ({c.volume} actes)</span>
                     <span className="font-semibold">{c.revenue.toFixed(0)} MAD</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="p-4 rounded-xl glass-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+            <h2 className="text-lg font-semibold mb-4 border-b pb-2">Charges par Catégorie</h2>
+            {data.chargesByCategory.length === 0 ? (
+              <p className="text-muted-foreground text-sm">Aucune donnée</p>
+            ) : (
+              <ul className="space-y-3">
+                {data.chargesByCategory.map(c => (
+                  <li key={c.name} className="flex justify-between">
+                    <span className="text-muted-foreground flex items-center gap-1.5">
+                      {c.color && (
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: c.color }} />
+                      )}
+                      {c.name}
+                    </span>
+                    <span className="font-semibold">{c.total.toFixed(0)} MAD</span>
                   </li>
                 ))}
               </ul>

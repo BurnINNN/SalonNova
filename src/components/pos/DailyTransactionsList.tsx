@@ -80,6 +80,18 @@ export function DailyTransactionsList({ transactions }: DailyTransactionsListPro
                     <ExternalLink className="w-3 h-3" /> Voir le rendez-vous lié
                   </Link>
                 )}
+
+                {t.chargeEntries && t.chargeEntries.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2.5 pt-2 border-t border-border/30">
+                    <span className="text-[11px] font-semibold text-muted-foreground self-center uppercase tracking-wider">Charges :</span>
+                    {t.chargeEntries.map((c: any) => (
+                      <span key={c.id} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+                        <span>{c.category.icon || '📦'}</span>
+                        <span>{c.category.name} : {c.estimatedAmount.toFixed(0)} DH</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
                 
                 {t.cancelledAt && (
                   <p className="text-xs text-destructive mt-2 flex items-center gap-1">

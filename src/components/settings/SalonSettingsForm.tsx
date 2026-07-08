@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { updateSalon, UpdateSalonInput, SalonSettingsType } from '@/actions/salon'
-import { Save, Store, Globe, MessageCircle, Bot, MapPin, Clock } from 'lucide-react'
+import { Save, Store, Globe, MessageCircle, Bot, MapPin, Clock, CalendarDays } from 'lucide-react'
 
 // Local schema matching the server schema
 const SettingsFormSchema = z.object({
@@ -28,6 +28,10 @@ const SettingsFormSchema = z.object({
     aiTone: z.string().default('chaleureux et professionnel'),
     hairCareRules: z.string().optional(),
     delayMargin: z.coerce.number().default(0),
+    // Horaires du salon (pilotent le calendrier)
+    calendarStartTime: z.string().default('09:00'),
+    calendarEndTime: z.string().default('20:00'),
+    workDays: z.array(z.number()).default([1, 2, 3, 4, 5, 6]),
   })
 })
 
@@ -68,6 +72,9 @@ export function SalonSettingsForm({ salon }: SalonSettingsFormProps) {
         aiTone: salon.settings.aiTone || 'chaleureux et professionnel',
         hairCareRules: salon.settings.hairCareRules || '',
         delayMargin: salon.settings.delayMargin || 0,
+        calendarStartTime: (salon.settings as any).calendarStartTime || '09:00',
+        calendarEndTime: (salon.settings as any).calendarEndTime || '20:00',
+        workDays: (salon.settings as any).workDays || [1, 2, 3, 4, 5, 6],
       },
     },
   })
@@ -216,6 +223,96 @@ export function SalonSettingsForm({ salon }: SalonSettingsFormProps) {
               Cette marge est ajoutée automatiquement à la durée de chaque prestation pour bloquer un créneau plus large (ex: coupe de 30 min + 15 min de marge = 45 min réservées). Utilisé pour la prise de RDV manuelle et par l'IA.
             </p>
           </div>
+        </div>
+      </div>
+
+      {/* Horaires du Salon & Calendrier */}
+      <div className="glass-card p-6 space-y-4">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600">
+            <CalendarDays className="w-4 h-4" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold">Horaires du Salon</h2>
+            <p className="text-sm text-muted-foreground">Ces horaires définissent la plage visible de votre calendrier.</p>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Heure d'ouverture</label>
+            <select
+              {...form.register('settings.calendarStartTime')}
+              className={selectClass}
+            >
+              {Array.from({ length: 13 }, (_, i) => {
+                const h = i + 6
+                return [
+                  <option key={`${h}:00`} value={`${String(h).padStart(2, '0')}:00`}>{`${String(h).padStart(2, '0')}:00`}</option>,
+                  <option key={`${h}:30`} value={`${String(h).padStart(2, '0')}:30`}>{`${String(h).padStart(2, '0')}:30`}</option>,
+                ]
+              })}
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Heure de fermeture</label>
+            <select
+              {...form.register('settings.calendarEndTime')}
+              className={selectClass}
+            >
+              {Array.from({ length: 15 }, (_, i) => {
+                const h = i + 16
+                if (h > 23) return null
+                return [
+                  <option key={`${h}:00`} value={`${String(h).padStart(2, '0')}:00`}>{`${String(h).padStart(2, '0')}:00`}</option>,
+                  <option key={`${h}:30`} value={`${String(h).padStart(2, '0')}:30`}>{`${String(h).padStart(2, '0')}:30`}</option>,
+                ]
+              })}
+            </select>
+          </div>
+        </div>
+
+        <div className="space-y-2 pt-2">
+          <label className="text-sm font-medium">Jours travaillés</label>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { label: 'Lun', value: 1 },
+              { label: 'Mar', value: 2 },
+              { label: 'Mer', value: 3 },
+              { label: 'Jeu', value: 4 },
+              { label: 'Ven', value: 5 },
+              { label: 'Sam', value: 6 },
+              { label: 'Dim', value: 0 },
+            ].map(day => {
+              const workDays = form.watch('settings.workDays') || []
+              const isActive = workDays.includes(day.value)
+              return (
+                <button
+                  key={day.value}
+                  type="button"
+                  onClick={() => {
+                    const current = form.getValues('settings.workDays') || []
+                    if (current.includes(day.value)) {
+                      form.setValue('settings.workDays', current.filter((d: number) => d !== day.value), { shouldDirty: true })
+                    } else {
+                      form.setValue('settings.workDays', [...current, day.value].sort(), { shouldDirty: true })
+                    }
+                  }}
+                  className={`px-3.5 py-2 rounded-xl text-sm font-medium transition-all border ${
+                    isActive
+                      ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                      : 'bg-background/50 text-muted-foreground border-input hover:border-primary/50'
+                  }`}
+                >
+                  {day.label}
+                </button>
+              )
+            })}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Les jours non travaillés seront grisés dans le calendrier.
+          </p>
         </div>
       </div>
 

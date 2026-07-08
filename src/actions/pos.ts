@@ -136,7 +136,8 @@ export async function getDailyTransactions(salonId: string, dateStr?: string) {
     include: {
       client: true,
       employee: true,
-      lines: true
+      lines: true,
+      chargeEntries: { include: { category: true } }
     },
     orderBy: { createdAt: 'desc' }
   })

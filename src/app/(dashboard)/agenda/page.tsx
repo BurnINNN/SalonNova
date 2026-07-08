@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { createClient } from '@/lib/supabase/server'
 import { AgendaClient } from '@/components/agenda/AgendaClient'
+import { getSalon } from '@/actions/salon'
 
 export default async function AgendaPage() {
   const supabase = createClient()
@@ -12,6 +13,7 @@ export default async function AgendaPage() {
   let employees: any[] = []
   let services: any[] = []
   let salonId = ''
+  let salonSettings: any = {}
 
   if (user) {
     employee = await prisma.employee.findUnique({
@@ -41,6 +43,12 @@ export default async function AgendaPage() {
       clients = clientList
       employees = employeeList
       services = serviceList
+
+      // Récupérer les settings du salon (horaires calendrier)
+      const salon = await getSalon(salonId)
+      if (salon) {
+        salonSettings = salon.settings
+      }
     }
   }
 
@@ -124,6 +132,11 @@ export default async function AgendaPage() {
       employees={employees.map(e => ({ id: e.id, name: e.name }))}
       services={services.map(s => ({ id: s.id, name: s.name, duration: s.duration, price: s.price }))}
       salonId={salonId}
+      salonSettings={{
+        calendarStartTime: salonSettings?.calendarStartTime || '09:00',
+        calendarEndTime: salonSettings?.calendarEndTime || '20:00',
+        workDays: salonSettings?.workDays || [1, 2, 3, 4, 5, 6],
+      }}
     />
   )
 }

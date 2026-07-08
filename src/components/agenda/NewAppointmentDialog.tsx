@@ -70,9 +70,42 @@ export function NewAppointmentDialog({
   const [newClientLastName, setNewClientLastName] = useState('')
   const [newClientPhone, setNewClientPhone] = useState('')
 
-  // Pre-fill date when dialog opens with a date from calendar
-  const effectiveDate = date || (initialDate ? initialDate.toISOString().split('T')[0] : '')
-  const effectiveTime = time || (initialDate ? `${String(initialDate.getHours()).padStart(2, '0')}:${String(initialDate.getMinutes()).padStart(2, '0')}` : '')
+  // Synchroniser l'état quand le dialogue s'ouvre ou que la date initiale change
+  useState(() => {
+    if (open && initialDate) {
+      const yyyy = initialDate.getFullYear()
+      const mm = String(initialDate.getMonth() + 1).padStart(2, '0')
+      const dd = String(initialDate.getDate()).padStart(2, '0')
+      setDate(`${yyyy}-${mm}-${dd}`)
+      setTime(`${String(initialDate.getHours()).padStart(2, '0')}:${String(initialDate.getMinutes()).padStart(2, '0')}`)
+    }
+  })
+
+  // Permet de forcer la mise à jour lors de l'ouverture
+  const handleOpenUpdate = () => {
+    if (initialDate) {
+      const yyyy = initialDate.getFullYear()
+      const mm = String(initialDate.getMonth() + 1).padStart(2, '0')
+      const dd = String(initialDate.getDate()).padStart(2, '0')
+      setDate(`${yyyy}-${mm}-${dd}`)
+      setTime(`${String(initialDate.getHours()).padStart(2, '0')}:${String(initialDate.getMinutes()).padStart(2, '0')}`)
+    }
+  }
+
+  // Utilisons un useEffect pour s'assurer du calage
+  const { useEffect } = require('react')
+  useEffect(() => {
+    if (open && initialDate) {
+      const yyyy = initialDate.getFullYear()
+      const mm = String(initialDate.getMonth() + 1).padStart(2, '0')
+      const dd = String(initialDate.getDate()).padStart(2, '0')
+      setDate(`${yyyy}-${mm}-${dd}`)
+      setTime(`${String(initialDate.getHours()).padStart(2, '0')}:${String(initialDate.getMinutes()).padStart(2, '0')}`)
+    }
+  }, [open, initialDate])
+
+  const effectiveDate = date
+  const effectiveTime = time
 
   const selectedService = services.find(s => s.id === serviceId)
   
@@ -308,9 +341,6 @@ export function NewAppointmentDialog({
                 type="time"
                 value={time || effectiveTime}
                 onChange={(e) => setTime(e.target.value)}
-                min="08:00"
-                max="19:30"
-                step="1800"
                 required
               />
             </div>

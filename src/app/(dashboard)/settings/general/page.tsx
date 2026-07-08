@@ -1,5 +1,7 @@
 import { getSalon } from '@/actions/salon'
+import { getChargeCategories } from '@/actions/charges'
 import { SalonSettingsForm } from '@/components/settings/SalonSettingsForm'
+import { ChargeCategoryManager } from '@/components/settings/ChargeCategoryManager'
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
@@ -32,6 +34,8 @@ export default async function GeneralSettingsPage() {
     )
   }
 
+  const chargeCategories = await getChargeCategories(salonId)
+
   return (
     <div className="space-y-6">
       <div>
@@ -42,6 +46,8 @@ export default async function GeneralSettingsPage() {
       </div>
 
       <SalonSettingsForm salon={salon} />
+
+      <ChargeCategoryManager categories={chargeCategories} salonId={salonId} />
     </div>
   )
 }

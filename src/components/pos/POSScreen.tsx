@@ -11,6 +11,8 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { CheckCircle2 } from 'lucide-react'
+import { ServiceChargesModal } from '@/components/caisse/ServiceChargesModal'
+import { DailySummaryCard } from '@/components/caisse/DailySummaryCard'
 
 export interface POSLine {
   id: string
@@ -41,6 +43,8 @@ export function POSScreen({
   
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [receiptData, setReceiptData] = useState<any>(null)
+  const [lastTransactionId, setLastTransactionId] = useState<string | null>(null)
+  const [isChargesModalOpen, setIsChargesModalOpen] = useState(false)
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
 
   // Initialization if an appointment is provided via URL
@@ -144,6 +148,8 @@ export function POSScreen({
 
       toast.success('Encaissement réussi')
       setReceiptData({ ...transaction, lines })
+      setLastTransactionId(transaction.id)
+      setIsChargesModalOpen(true)
       
       // Reset
       setLines([])
@@ -306,6 +312,19 @@ export function POSScreen({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modale de Charges opérationnelles */}
+      {lastTransactionId && (
+        <ServiceChargesModal
+          isOpen={isChargesModalOpen}
+          onClose={() => {
+            setIsChargesModalOpen(false)
+            setLastTransactionId(null)
+          }}
+          transactionId={lastTransactionId}
+          salonId={salonId}
+        />
+      )}
 
       {receiptData && (
         <TransactionReceipt 
