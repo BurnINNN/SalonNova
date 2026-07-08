@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createAppointment } from '@/actions/appointments'
 import { createClient } from '@/actions/clients'
@@ -93,7 +93,6 @@ export function NewAppointmentDialog({
   }
 
   // Utilisons un useEffect pour s'assurer du calage
-  const { useEffect } = require('react')
   useEffect(() => {
     if (open && initialDate) {
       const yyyy = initialDate.getFullYear()
