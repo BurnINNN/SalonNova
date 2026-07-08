@@ -22,7 +22,7 @@ async function verifySuperadmin() {
 // 1. Switch the active salon for the superadmin
 export async function switchSuperadminSalon(salonId: string) {
   try {
-    await verifySuperadmin()
+    const user = await verifySuperadmin()
 
     // Verify the salon exists
     const salon = await prisma.salon.findUnique({ where: { id: salonId } })
@@ -30,11 +30,38 @@ export async function switchSuperadminSalon(salonId: string) {
       return { success: false, error: 'Salon introuvable' }
     }
 
-    // Update the superadmin's employee record to link to the new salon
-    await prisma.employee.update({
-      where: { email: SUPERADMIN_EMAIL },
-      data: { salonId },
+    // Rechercher l'employé superadmin existant par userId ou email
+    const employee = await prisma.employee.findFirst({
+      where: {
+        OR: [
+          { userId: user.id },
+          { email: SUPERADMIN_EMAIL }
+        ]
+      }
     })
+
+    if (employee) {
+      // Mettre à jour l'employé existant
+      await prisma.employee.update({
+        where: { id: employee.id },
+        data: { 
+          salonId,
+          userId: user.id,
+          email: SUPERADMIN_EMAIL
+        },
+      })
+    } else {
+      // Créer l'employé superadmin s'il n'existe pas
+      await prisma.employee.create({
+        data: {
+          name: 'Super Admin',
+          email: SUPERADMIN_EMAIL,
+          role: 'MANAGER',
+          userId: user.id,
+          salonId: salonId
+        }
+      })
+    }
 
     revalidatePath('/', 'layout')
     return { success: true }
@@ -103,7 +130,7 @@ export async function createAccountAction(input: z.infer<typeof CreateAccountSch
 
     // Confirm email directly via raw SQL to bypass confirmation email flow
     await prisma.$executeRawUnsafe(
-      `UPDATE auth.users SET email_confirmed_at = now() WHERE id = $1`,
+      `UPDATE auth.users SET email_confirmed_at = now() WHERE id = $1::uuid`,
       userId
     )
 
@@ -177,7 +204,7 @@ export async function deleteEmployeeAction(employeeId: string) {
     // If there is an associated Supabase Auth user, delete it directly from the database
     if (employee.userId) {
       await prisma.$executeRawUnsafe(
-        `DELETE FROM auth.users WHERE id = $1`,
+        `DELETE FROM auth.users WHERE id = $1::uuid`,
         employee.userId
       )
     }

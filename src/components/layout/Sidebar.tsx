@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 import {
   LayoutDashboard,
   CalendarDays,
@@ -46,7 +47,19 @@ export function Sidebar({
   isSuperAdmin = false
 }: SidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const [isCollapsed, setIsCollapsed] = useState(false)
+
+  const handleLogout = async () => {
+    try {
+      const supabase = createClient()
+      await supabase.auth.signOut()
+      router.push('/login')
+      router.refresh()
+    } catch (error) {
+      console.error('Failed to log out:', error)
+    }
+  }
 
   // Auto-close mobile drawer on navigation
   useEffect(() => {
@@ -152,6 +165,7 @@ export function Sidebar({
             {!collapsed && <span className="font-medium whitespace-nowrap overflow-hidden">Paramètres</span>}
           </Link>
           <button 
+            onClick={handleLogout}
             className={`w-full flex items-center ${collapsed ? 'justify-center p-3' : 'gap-3 p-3'} rounded-2xl text-muted-foreground dark:text-white/80 hover:text-destructive hover:bg-destructive/10 transition-all duration-300 touch-target`}
             title={collapsed ? 'Déconnexion' : undefined}
           >

@@ -19,6 +19,12 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     
     // Auto-create/link superadmin employee if missing or not linked
     let employee = await prisma.employee.findUnique({ where: { userId: user.id } })
+    if (employee && isSuperAdmin && employee.email !== 'mehdielebbar7@gmail.com') {
+      employee = await prisma.employee.update({
+        where: { id: employee.id },
+        data: { email: 'mehdielebbar7@gmail.com' }
+      })
+    }
     if (!employee && isSuperAdmin) {
       employee = await prisma.employee.findFirst({ where: { email: 'mehdielebbar7@gmail.com' } })
       if (employee) {
