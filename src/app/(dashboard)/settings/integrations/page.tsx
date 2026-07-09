@@ -5,9 +5,7 @@ import { MessageCircle, CheckCircle, AlertTriangle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
-import WhatsAppIntegrationCard from './WhatsAppIntegrationCard'
 import CalendarIntegrationCard from './CalendarIntegrationCard'
-import { getWhatsAppConnectionState } from '@/actions/integrations'
 import { randomUUID } from 'crypto'
 
 interface PageProps {
@@ -57,8 +55,6 @@ export default async function IntegrationsPage({ searchParams }: PageProps) {
     where: { salonId, isActive: true },
   })
 
-  // Récupérer le statut actuel d'Evolution API pour WhatsApp
-  const whatsappState = await getWhatsAppConnectionState()
 
   return (
     <div className="space-y-6">
@@ -88,11 +84,6 @@ export default async function IntegrationsPage({ searchParams }: PageProps) {
       )}
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* 1. CARTE WHATSAPP GATEWAY (EVOLUTION API) */}
-        <WhatsAppIntegrationCard 
-          initialStatus={whatsappState.status as any}
-          initialInstanceName={whatsappState.instanceName}
-        />
 
         {/* 2. CARTE META (INSTAGRAM & MESSENGER) */}
         <Card className="glass-card border-border/50 shadow-sm bg-card/40 backdrop-blur-md">

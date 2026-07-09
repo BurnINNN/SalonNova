@@ -104,23 +104,6 @@ export function MovementForm({
         )}
       </div>
 
-      {/* Coût unitaire — uniquement pour les entrées */}
-      {isEntree && (
-        <div className="space-y-2">
-          <Label>Coût unitaire (MAD) — pour recalcul CUMP</Label>
-          <Input
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="0.00"
-            className="h-12 text-base"
-            {...form.register('unitCost')}
-          />
-          <p className="text-xs text-slate-400">
-            Laissez vide pour conserver le CUMP actuel
-          </p>
-        </div>
-      )}
 
       {/* Raison */}
       <div className="space-y-2">

@@ -4,7 +4,6 @@ import { getProductWithMovements } from '@/actions/stock'
 import { ProductForm } from '@/components/stock/ProductForm'
 import { MovementForm } from '@/components/stock/MovementForm'
 import { notFound } from 'next/navigation'
-import { formatMAD } from '@/lib/stock/utils'
 
 export default async function EditProductPage({ params }: { params: { id: string } }) {
   const supabase = createClient()
@@ -96,17 +95,6 @@ export default async function EditProductPage({ params }: { params: { id: string
             unit={product.unit}
             currentStock={product.currentStock}
           />
-        </div>
-        
-        <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-6">
-          <h2 className="text-lg font-semibold mb-2">Informations CUMP</h2>
-          <p className="text-sm text-slate-500 mb-4">
-            Le Coût Unitaire Moyen Pondéré est recalculé automatiquement à chaque entrée.
-          </p>
-          <div className="text-2xl font-bold text-slate-800 dark:text-slate-100">
-            {formatMAD(product.purchasePrice)}
-          </div>
-          <div className="text-xs text-slate-400 mt-1">par {product.unit}</div>
         </div>
       </div>
     </div>

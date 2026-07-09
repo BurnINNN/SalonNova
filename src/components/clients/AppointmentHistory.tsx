@@ -1,6 +1,11 @@
+'use client'
+
+import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import { Receipt } from 'lucide-react'
+import { TransactionReceipt } from '@/components/pos/TransactionReceipt'
 
 const statusConfig: Record<string, { label: string; variant: 'outline' | 'default' | 'destructive' | 'secondary'; color: string }> = {
   SCHEDULED: { label: 'Planifié', variant: 'outline', color: 'text-blue-600' },
@@ -15,9 +20,13 @@ interface Appointment {
   status: string
   service: { name: string; price: number }
   employee: { name: string }
+  isTransaction?: boolean
+  transactionData?: any
 }
 
-export function AppointmentHistory({ appointments }: { appointments: Appointment[] }) {
+export function AppointmentHistory({ appointments, salonName }: { appointments: Appointment[]; salonName: string }) {
+  const [selectedTransaction, setSelectedTransaction] = useState<any | null>(null)
+
   if (appointments.length === 0) {
     return (
       <div className="text-center text-muted-foreground py-10 text-sm">
@@ -44,6 +53,15 @@ export function AppointmentHistory({ appointments }: { appointments: Appointment
               </p>
             </div>
             <div className="flex items-center gap-3">
+              {apt.isTransaction && apt.transactionData && (
+                <button
+                  onClick={() => setSelectedTransaction(apt.transactionData)}
+                  className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                  title="Voir le reçu"
+                >
+                  <Receipt className="w-4.5 h-4.5" />
+                </button>
+              )}
               <span className="text-sm font-semibold text-foreground">
                 {apt.service.price} MAD
               </span>
@@ -52,6 +70,15 @@ export function AppointmentHistory({ appointments }: { appointments: Appointment
           </div>
         )
       })}
+
+      {selectedTransaction && (
+        <TransactionReceipt
+          data={selectedTransaction}
+          onClose={() => setSelectedTransaction(null)}
+          salonName={salonName}
+        />
+      )}
     </div>
   )
 }
+

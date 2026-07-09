@@ -28,6 +28,7 @@ const SettingsFormSchema = z.object({
     aiTone: z.string().default('chaleureux et professionnel'),
     hairCareRules: z.string().optional(),
     delayMargin: z.coerce.number().default(0),
+    aiEnabled: z.boolean().default(true),
     // Horaires du salon (pilotent le calendrier)
     calendarStartTime: z.string().default('09:00'),
     calendarEndTime: z.string().default('20:00'),
@@ -71,7 +72,7 @@ export function SalonSettingsForm({ salon }: SalonSettingsFormProps) {
         aiName: salon.settings.aiName || '',
         aiTone: salon.settings.aiTone || 'chaleureux et professionnel',
         hairCareRules: salon.settings.hairCareRules || '',
-        delayMargin: salon.settings.delayMargin || 0,
+        aiEnabled: salon.settings.aiEnabled !== false,
         calendarStartTime: (salon.settings as any).calendarStartTime || '09:00',
         calendarEndTime: (salon.settings as any).calendarEndTime || '20:00',
         workDays: (salon.settings as any).workDays || [1, 2, 3, 4, 5, 6],
@@ -148,53 +149,10 @@ export function SalonSettingsForm({ salon }: SalonSettingsFormProps) {
               Collez le lien de votre salon sur Google Maps pour que les clients puissent vous trouver facilement.
             </p>
           </div>
-
-          <div className="space-y-2 md:col-span-2">
-            <label className="text-sm font-medium">Horaires d'ouverture</label>
-            <input
-              {...form.register('settings.openingHours')}
-              className={inputClass}
-              placeholder="Ex: Lun-Sam 9h-19h, Dim fermé"
-            />
-          </div>
         </div>
       </div>
 
-      {/* Localisation & Devises */}
-      <div className="glass-card p-6 space-y-4">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-            <Globe className="w-4 h-4" />
-          </div>
-          <h2 className="text-xl font-semibold">Localisation & Devise</h2>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Devise par défaut</label>
-            <select
-              {...form.register('settings.currency')}
-              className={selectClass}
-            >
-              <option value="MAD">Dirham Marocain (MAD)</option>
-              <option value="EUR">Euro (€)</option>
-              <option value="USD">Dollar Américain ($)</option>
-            </select>
-          </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Fuseau horaire</label>
-            <select
-              {...form.register('settings.timezone')}
-              className={selectClass}
-            >
-              <option value="Africa/Casablanca">Africa/Casablanca</option>
-              <option value="Europe/Paris">Europe/Paris</option>
-              <option value="America/New_York">America/New_York</option>
-            </select>
-          </div>
-        </div>
-      </div>
 
       {/* Règles des Prestations & Retard */}
       <div className="glass-card p-6 space-y-4">
@@ -326,6 +284,18 @@ export function SalonSettingsForm({ salon }: SalonSettingsFormProps) {
             <h2 className="text-xl font-semibold">Assistante IA</h2>
             <p className="text-sm text-muted-foreground">Personnalisez le comportement de votre assistante virtuelle.</p>
           </div>
+        </div>
+        
+        <div className="flex items-center justify-between p-4 bg-secondary/20 rounded-2xl border border-border/50 mb-4">
+          <div className="space-y-0.5">
+            <label className="text-sm font-semibold text-foreground">Messagerie automatique par l'IA</label>
+            <p className="text-xs text-muted-foreground">Si activé, l'IA répondra automatiquement aux messages des clients.</p>
+          </div>
+          <input
+            type="checkbox"
+            {...form.register('settings.aiEnabled')}
+            className="rounded border-border w-5 h-5 text-primary focus:ring-primary cursor-pointer"
+          />
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

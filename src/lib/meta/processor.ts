@@ -369,8 +369,21 @@ async function handleIncomingMessage(params: IncomingMessageParams) {
     data: { updatedAt: new Date() },
   })
 
-  // 4. Si la conversation est gérée par le bot, appeler l'IA
-  if (conversation.status === 'BOT') {
+  // 4. Si la conversation est gérée par le bot, appeler l'IA (si activé globalement + client)
+  const salon = await prisma.salon.findUnique({ where: { id: salonId } })
+  const settings = (salon?.settings as any) || {}
+  const isAiEnabledGlobally = settings.aiEnabled !== false
+
+  let isAiEnabledForClient = true
+  const actualClientId = clientId || conversation.clientId
+  if (actualClientId) {
+    const client = await prisma.client.findUnique({ where: { id: actualClientId } })
+    if (client) {
+      isAiEnabledForClient = client.aiEnabled !== false
+    }
+  }
+
+  if (conversation.status === 'BOT' && isAiEnabledGlobally && isAiEnabledForClient) {
     try {
       // 4a. Traiter l'image si présente
       let imageData = null

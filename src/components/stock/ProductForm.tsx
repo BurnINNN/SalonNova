@@ -38,10 +38,10 @@ export function ProductForm({ salonId, initialData }: ProductFormProps) {
       brand: '',
       reference: '',
       description: '',
-      category: 'COLORANT',
+      category: 'AUTRE',
       unit: 'unité',
       currentStock: 0,
-      minStock: 1,
+      minStock: 0,
       purchasePrice: 0,
       sellingPrice: 0,
     },
@@ -83,74 +83,10 @@ export function ProductForm({ salonId, initialData }: ProductFormProps) {
           <Input placeholder="Ex: L'Oréal" {...form.register('brand')} />
         </div>
 
-        {/* Catégorie */}
-        <div className="space-y-2">
-          <Label>Catégorie *</Label>
-          <Select
-            value={form.watch('category')}
-            onValueChange={v => form.setValue('category', v as any)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {categoryOrder.map(cat => (
-                <SelectItem key={cat} value={cat}>{categoryLabels[cat]}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Référence */}
-        <div className="space-y-2">
-          <Label>Référence (SKU)</Label>
-          <Input placeholder="Ex: LOR-MAJ-60" {...form.register('reference')} />
-        </div>
-
-
-
-        {/* Description */}
+        {/* Prix (Prix de revente) */}
         <div className="space-y-2 md:col-span-2">
-          <Label>Description</Label>
-          <Textarea placeholder="Informations complémentaires..." rows={2} {...form.register('description')} />
-        </div>
-
-        <div className="col-span-1 md:col-span-2"><hr className="border-slate-100 dark:border-slate-800" /></div>
-
-        {/* Stock actuel */}
-        <div className="space-y-2">
-          <Label>Stock actuel *</Label>
-          <Input
-            type="number"
-            step="0.01"
-            min="0"
-            disabled={isEditing} // Non modifiable en édition (passe par MovementForm)
-            {...form.register('currentStock')}
-          />
-          {isEditing && (
-            <p className="text-xs text-slate-400">
-              Modifiable uniquement via les mouvements de stock.
-            </p>
-          )}
-        </div>
-
-        {/* Seuil d'alerte */}
-        <div className="space-y-2">
-          <Label>Seuil d'alerte (Stock min) *</Label>
-          <Input type="number" step="0.01" min="0" {...form.register('minStock')} />
-        </div>
-
-        {/* Prix d'achat */}
-        <div className="space-y-2">
-          <Label>Prix d'achat (CUMP en MAD) *</Label>
-          <Input type="number" step="0.01" min="0" {...form.register('purchasePrice')} />
-        </div>
-
-        {/* Prix de revente */}
-        <div className="space-y-2">
-          <Label>Prix de revente (MAD)</Label>
-          <Input type="number" step="0.01" min="0" {...form.register('sellingPrice')} />
-          <p className="text-xs text-slate-400">Pour les produits de la catégorie "Revente".</p>
+          <Label>Prix (MAD) *</Label>
+          <Input type="number" step="0.01" min="0" placeholder="0.00" {...form.register('sellingPrice')} />
         </div>
       </div>
 

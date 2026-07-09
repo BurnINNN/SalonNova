@@ -31,6 +31,9 @@ async function getSalonId(): Promise<string> {
 export async function getConversations(statusFilter?: string) {
   const salonId = await getSalonId()
 
+  // Nettoyage automatique des conversations anciennes (maximum 20 récentes)
+  await cleanupOldConversations(salonId)
+
   const conversations = await prisma.conversation.findMany({
     where: {
       salonId,
@@ -225,3 +228,56 @@ export async function reactivateBotConversation(conversationId: string) {
 
   return { success: true }
 }
+
+/**
+ * Active/désactive l'IA de façon globale pour le salon.
+ */
+export async function toggleSalonAI(salonId: string, enabled: boolean) {
+  const salon = await prisma.salon.findUnique({ where: { id: salonId } })
+  if (!salon) throw new Error('Salon introuvable.')
+  const settings = (salon.settings as any) || {}
+  settings.aiEnabled = enabled
+
+  await prisma.salon.update({
+    where: { id: salonId },
+    data: { settings },
+  })
+
+  return { success: true }
+}
+
+/**
+ * Active/désactive l'IA pour un client spécifique.
+ */
+export async function toggleClientAI(clientId: string, enabled: boolean) {
+  await prisma.client.update({
+    where: { id: clientId },
+    data: { aiEnabled: enabled },
+  })
+
+  return { success: true }
+}
+
+/**
+ * Conserve uniquement les 20 conversations les plus récentes d'un salon.
+ */
+async function cleanupOldConversations(salonId: string) {
+  try {
+    const conversations = await prisma.conversation.findMany({
+      where: { salonId },
+      orderBy: { updatedAt: 'desc' },
+      select: { id: true },
+    })
+
+    if (conversations.length > 20) {
+      const idsToDelete = conversations.slice(20).map(c => c.id)
+      await prisma.conversation.deleteMany({
+        where: { id: { in: idsToDelete } }
+      })
+      console.log(`[CLEANUP] Supprimé ${idsToDelete.length} anciennes conversations pour le salon ${salonId}`)
+    }
+  } catch (error) {
+    console.error('[CLEANUP ERROR] Impossible de nettoyer les conversations :', error)
+  }
+}
+

@@ -2,7 +2,6 @@ import { prisma } from '@/lib/prisma'
 import { createClient } from '@/lib/supabase/server'
 import { getStockDashboardMetrics } from '@/actions/stock'
 import { MetricCard } from '@/components/dashboard/MetricCard'
-import { StockAlertPanel } from '@/components/stock/StockAlertPanel'
 import { ProductTable } from '@/components/stock/ProductTable'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
@@ -41,7 +40,7 @@ export default async function StockPage() {
       </div>
 
       {/* Métriques */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <MetricCard
           label="Valeur du stock"
           value={`${metrics.totalValue.toFixed(0)} MAD`}
@@ -52,20 +51,7 @@ export default async function StockPage() {
           value={metrics.productCount}
           accent="blue"
         />
-        <MetricCard
-          label="Stock bas"
-          value={metrics.basCount}
-          accent={metrics.basCount > 0 ? 'orange' : 'green'}
-        />
-        <MetricCard
-          label="Ruptures"
-          value={metrics.ruptureCount}
-          accent={metrics.ruptureCount > 0 ? 'orange' : 'green'}
-        />
       </div>
-
-      {/* Alertes */}
-      <StockAlertPanel salonId={employee.salonId} />
 
       {/* Tableau produits */}
       <ProductTable products={products as any} />

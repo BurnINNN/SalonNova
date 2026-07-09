@@ -2,7 +2,8 @@ import { prisma } from '@/lib/prisma'
 import { createClient } from '@/lib/supabase/server'
 import { getAnalytics } from '@/actions/analytics'
 import { MetricCard } from '@/components/dashboard/MetricCard'
-import { TopList } from '@/components/analytics/TopList'
+import { TopServicesChart } from '@/components/analytics/TopServicesChart'
+import { TopClientsChart } from '@/components/analytics/TopClientsChart'
 import { MetricsChart } from '@/components/analytics/MetricsChart'
 import { IndirectChargeDialog } from '@/components/finances/IndirectChargeDialog'
 import { PrintBilanButton } from '@/components/finances/PrintBilanButton'
@@ -70,9 +71,8 @@ export default async function FinancesPage({ searchParams }: { searchParams: { r
           <p className="text-lg text-slate-500 capitalize">{monthName}</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <MetricCard label="Chiffre d'Affaires" value={`${data.ca.toFixed(0)} MAD`} accent="green" />
-          <MetricCard label="Charges Directes (Produits)" value={`${data.directCharges.toFixed(0)} MAD`} accent="orange" />
           <MetricCard label="Charges Opérationnelles" value={`${data.operationalCharges.toFixed(0)} MAD`} accent="purple" />
           <MetricCard label="Résultat Net" value={`${data.netResult.toFixed(0)} MAD`} accent={data.netResult >= 0 ? 'green' : 'orange'} />
         </div>
@@ -86,8 +86,8 @@ export default async function FinancesPage({ searchParams }: { searchParams: { r
                 <span className="font-semibold">{data.appointmentsCount}</span>
               </li>
               <li className="flex justify-between">
-                <span className="text-muted-foreground">Coût Produits (Direct)</span>
-                <span className="font-semibold">{data.directCharges.toFixed(0)} MAD</span>
+                <span className="text-muted-foreground">Vente Produits (CA)</span>
+                <span className="font-semibold">{data.productSales.toFixed(0)} MAD</span>
               </li>
               <li className="flex justify-between">
                 <span className="text-muted-foreground">Charges Opérationnelles</span>
@@ -181,8 +181,8 @@ export default async function FinancesPage({ searchParams }: { searchParams: { r
         </div>
 
         <div className="no-print grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
-          <TopList title="Top 5 Prestations" items={data.topServices.map(s => ({ name: s.name, value: `${s.revenue.toFixed(0)} MAD`, subValue: `${s.volume} ventes` }))} />
-          <TopList title="Top 5 Clients" items={data.topClients.map(c => ({ name: c.name, value: `${c.revenue.toFixed(0)} MAD`, subValue: `${c.visits} visites` }))} />
+          <TopServicesChart title="Top 5 Prestations" data={data.topServices} />
+          <TopClientsChart title="Top 5 Clients" data={data.topClients} />
         </div>
       </div>
     </div>

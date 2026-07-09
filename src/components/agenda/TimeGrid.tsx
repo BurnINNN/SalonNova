@@ -203,15 +203,17 @@ export function TimeGrid({
                   backgroundColor: bgColor,
                 }}
               >
-                <div className="flex flex-col p-1.5 h-full text-white leading-tight">
-                  <span className="text-[11px] sm:text-xs font-bold truncate">
-                    {event.extendedProps?.clientName || event.title}
+                <div className="flex items-center gap-1.5 px-3 py-1 h-full text-white text-[11px] sm:text-xs font-semibold overflow-hidden">
+                  <span className="font-bold whitespace-nowrap">
+                    {format(new Date(event.start), 'HH:mm')}
                   </span>
-                  <span className="text-[9px] sm:text-[10px] opacity-85 truncate">
+                  <span className="opacity-60 font-normal">·</span>
+                  <span className="truncate font-bold">
                     {event.extendedProps?.serviceName || ''}
                   </span>
-                  <span className="text-[9px] sm:text-[10px] opacity-75 mt-auto">
-                    {format(new Date(event.start), 'HH:mm')} - {format(new Date(event.end), 'HH:mm')}
+                  <span className="opacity-60 font-normal">·</span>
+                  <span className="truncate opacity-90 font-medium">
+                    {event.extendedProps?.clientName || event.title}
                   </span>
                 </div>
               </button>

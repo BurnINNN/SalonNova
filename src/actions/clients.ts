@@ -130,7 +130,8 @@ export async function getClientWithHistory(id: string, salonId: string) {
       status: 'COMPLETED',
       service: { name: t.lines.map(l => l.label).join(', ') || 'Achat', price: t.totalAmount },
       employee: { name: t.employee?.name || 'Inconnu' },
-      isTransaction: true
+      isTransaction: true,
+      transactionData: JSON.parse(JSON.stringify(t))
     })
   })
 

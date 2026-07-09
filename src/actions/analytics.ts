@@ -120,6 +120,16 @@ export async function getAnalytics(salonId: string, startDate?: Date, endDate?: 
     return sum + (e.salaryType !== 'COMMISSION' ? (e.baseSalary || 0) : 0)
   }, 0)
 
+  // 2b. Calcul du CA Vente Produits (vente à partir du stock de vente)
+  let productSales = 0
+  transactions.forEach(t => {
+    t.lines.forEach(line => {
+      if (line.productId) {
+        productSales += line.totalPrice
+      }
+    })
+  })
+
   return {
     appointmentsCount: transactions.length,
     ca,
@@ -133,6 +143,7 @@ export async function getAnalytics(salonId: string, startDate?: Date, endDate?: 
     categoryStats: Object.values(categoryStats),
     chargesByCategory: Object.values(chargesByCategory),
     netResult: ca - directCharges - operationalCharges - (indirectCharges + totalSalaries),
+    productSales,
   }
 }
 

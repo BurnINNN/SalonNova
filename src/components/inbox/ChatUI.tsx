@@ -24,6 +24,8 @@ import {
   takeOverConversation,
   resolveConversation,
   reactivateBotConversation,
+  toggleSalonAI,
+  toggleClientAI,
 } from '@/actions/inbox'
 import { confirmAppointment, rejectAppointment } from '@/actions/appointments'
 import { toast } from 'sonner'
@@ -43,6 +45,7 @@ interface Client {
   id: string
   firstName: string
   lastName: string
+  aiEnabled?: boolean
   appointments?: {
     id: string
     startTime: string | Date
@@ -73,6 +76,7 @@ interface Conversation {
 interface ChatUIProps {
   initialConversations: Conversation[]
   salonId: string
+  initialAiEnabled: boolean
 }
 
 // ============================================================
@@ -119,12 +123,13 @@ function formatDate(dateStr: string | Date): string {
 // COMPOSANT PRINCIPAL
 // ============================================================
 
-export function ChatUI({ initialConversations, salonId }: ChatUIProps) {
+export function ChatUI({ initialConversations, salonId, initialAiEnabled }: ChatUIProps) {
   const [conversations, setConversations] = useState<Conversation[]>(initialConversations)
   const [activeConvId, setActiveConvId] = useState<string | null>(initialConversations[0]?.id || null)
   const [messageInput, setMessageInput] = useState('')
   const [channelFilter, setChannelFilter] = useState<string>('ALL')
-  const [statusFilter, setStatusFilter] = useState<string>('ALL')
+  const [statusFilter, setStatusFilter] = useState<string>('BOT')
+  const [generalAiActive, setGeneralAiActive] = useState(initialAiEnabled)
   const [isPending, startTransition] = useTransition()
   const [isSending, setIsSending] = useState(false)
   const [mobileShowChat, setMobileShowChat] = useState(false)
@@ -222,13 +227,42 @@ export function ChatUI({ initialConversations, salonId }: ChatUIProps) {
   // Filtrer les conversations
   const filteredConversations = conversations.filter((conv) => {
     if (channelFilter !== 'ALL' && conv.channel !== channelFilter) return false
-    if (statusFilter !== 'ALL' && conv.status !== statusFilter) return false
+    if (conv.status !== statusFilter) return false
     return true
   })
 
   // ============================================================
   // HANDLERS
   // ============================================================
+
+  async function handleToggleGeneralAI() {
+    const nextVal = !generalAiActive
+    try {
+      await toggleSalonAI(salonId, nextVal)
+      setGeneralAiActive(nextVal)
+      toast.success(nextVal ? "Réponse automatique de l'IA activée ✓" : "Réponse automatique de l'IA désactivée ✗")
+    } catch (err) {
+      console.error(err)
+      toast.error("Erreur lors du changement d'état de l'IA.")
+    }
+  }
+
+  async function handleToggleClientAI(clientId: string, enabled: boolean) {
+    try {
+      await toggleClientAI(clientId, enabled)
+      setConversations(prev =>
+        prev.map(c =>
+          c.client?.id === clientId
+            ? { ...c, client: { ...c.client, aiEnabled: enabled } }
+            : c
+        )
+      )
+      toast.success(enabled ? "IA activée pour ce client ✓" : "IA désactivée pour ce client ✗")
+    } catch (err) {
+      console.error(err)
+      toast.error("Erreur lors du changement d'état de l'IA client.")
+    }
+  }
 
   async function handleSendMessage(e: React.FormEvent) {
     e.preventDefault()
@@ -359,10 +393,25 @@ export function ChatUI({ initialConversations, salonId }: ChatUIProps) {
     <div className="flex h-full rounded-3xl overflow-hidden glass-card shadow-sm">
       {/* ========== SIDEBAR — Liste des conversations ========== */}
       <div className={`w-full md:w-[360px] md:min-w-[320px] border-r border-border/50 flex flex-col bg-background/50 ${mobileShowChat ? 'hidden md:flex' : 'flex'}`}>
+        {/* Commutateur Général Réponse IA */}
+        <div className="flex items-center justify-between px-3 md:px-4 py-2.5 border-b border-border/50 bg-secondary/15 select-none">
+          <span className="text-xs font-semibold text-foreground">Réponse automatique IA</span>
+          <button
+            onClick={handleToggleGeneralAI}
+            className={`px-3 py-1 rounded-xl text-xs font-bold transition-all shadow-sm ${
+              generalAiActive
+                ? 'bg-green-600 hover:bg-green-700 text-white'
+                : 'bg-slate-400 hover:bg-slate-500 text-white'
+            }`}
+          >
+            {generalAiActive ? 'ACTIVÉ' : 'DÉSACTIVÉ'}
+          </button>
+        </div>
+
         {/* Filtres */}
         <div className="p-3 md:p-4 border-b border-border/50 space-y-2 md:space-y-3">
           <div className="flex gap-1 md:gap-1.5 flex-wrap">
-            {['ALL', 'BOT', 'HUMAN', 'RESOLVED'].map((status) => {
+            {['BOT', 'HUMAN'].map((status) => {
               const isActive = statusFilter === status
               return (
                 <button
@@ -374,7 +423,7 @@ export function ChatUI({ initialConversations, salonId }: ChatUIProps) {
                       : 'bg-secondary/50 text-muted-foreground hover:bg-secondary'
                   }`}
                 >
-                  {status === 'ALL' ? 'Toutes' : status === 'BOT' ? '🤖 Bot' : status === 'HUMAN' ? '👤 Humain' : '✅ Résolues'}
+                  {status === 'BOT' ? '🤖 Bot' : '👤 Humain'}
                 </button>
               )
             })}
@@ -497,6 +546,24 @@ export function ChatUI({ initialConversations, salonId }: ChatUIProps) {
                     <span className="hidden sm:inline">{channelConfig[activeConv.channel].label}</span>
                     <span className="hidden sm:inline">·</span>
                     <span className="hidden sm:inline">{activeConv.messages.length} messages</span>
+                    {activeConv.client && (
+                      <>
+                        <span className="hidden sm:inline">·</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="hidden sm:inline">IA active :</span>
+                          <button
+                            onClick={() => handleToggleClientAI(activeConv.client!.id, activeConv.client!.aiEnabled !== false ? false : true)}
+                            className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all shadow-sm ${
+                              activeConv.client!.aiEnabled !== false
+                                ? 'bg-green-500/15 text-green-700 dark:text-green-400 hover:bg-green-500/25'
+                                : 'bg-red-500/15 text-red-700 dark:text-red-400 hover:bg-red-500/25'
+                            }`}
+                          >
+                            {activeConv.client!.aiEnabled !== false ? 'OUI' : 'NON'}
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

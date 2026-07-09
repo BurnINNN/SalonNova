@@ -216,8 +216,12 @@ export async function handleEvolutionIncomingMessage(instanceName: string, data:
       data: { updatedAt: new Date() },
     })
 
-    // 5. Appeler l'IA si en mode BOT
-    if (conversation.status === 'BOT') {
+    const settings = (salon.settings as any) || {}
+    const isAiEnabledGlobally = settings.aiEnabled !== false
+    const isAiEnabledForClient = client.aiEnabled !== false
+
+    // 5. Appeler l'IA si en mode BOT et activé globalement + pour le client
+    if (conversation.status === 'BOT' && isAiEnabledGlobally && isAiEnabledForClient) {
       try {
         let imageData = null
         if (isImage) {

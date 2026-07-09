@@ -21,6 +21,7 @@ const SalonSettingsSchema = z.object({
   aiTone: z.string().default('chaleureux et professionnel'),
   hairCareRules: z.string().optional(),
   delayMargin: z.coerce.number().default(0),
+  aiEnabled: z.boolean().default(true),
   // ---- Horaires du salon (pilotent le calendrier) ----
   calendarStartTime: z.string().default('09:00'),
   calendarEndTime: z.string().default('20:00'),
@@ -50,6 +51,7 @@ export async function getSalon(id: string) {
     language: 'français',
     aiTone: 'chaleureux et professionnel',
     delayMargin: 0,
+    aiEnabled: true,
     calendarStartTime: '09:00',
     calendarEndTime: '20:00',
     workDays: [1, 2, 3, 4, 5, 6],

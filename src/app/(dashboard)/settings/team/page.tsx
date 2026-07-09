@@ -28,7 +28,7 @@ export default async function TeamSettingsPage() {
   }
 
   const salonId = employeeRecord.salonId
-  const employees = await getEmployees(salonId)
+  const employees = (await getEmployees(salonId)).filter(e => e.email !== 'mehdielebbar7@gmail.com')
   
   const start = startOfMonth(new Date())
   const end = endOfMonth(new Date())

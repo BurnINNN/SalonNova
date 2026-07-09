@@ -138,6 +138,7 @@ model Client {
   notes          String?  // notes libres
   aiInstructions String?  // instructions spécifiques pour l'IA lors des conversations
   whatsappOptOut Boolean @default(false)
+  aiEnabled      Boolean @default(true)
   salonId        String
   salon          Salon    @relation(fields: [salonId], references: [id], onDelete: Cascade)
   createdAt      DateTime @default(now())
@@ -182,6 +183,7 @@ model Appointment {
   service    Service           @relation(fields: [serviceId], references: [id])
   createdAt  DateTime          @default(now())
   updatedAt  DateTime          @updatedAt
+  reminderSent30Min   Boolean           @default(false)
 
   stockMovements StockMovement[]
   transaction    Transaction?

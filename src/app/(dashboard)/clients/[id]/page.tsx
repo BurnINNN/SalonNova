@@ -8,6 +8,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 
 import { EditClientDialog } from '@/components/clients/EditClientDialog'
+import { DeleteClientButton } from '@/components/clients/DeleteClientButton'
 
 export default async function ClientPage({ params }: { params: { id: string } }) {
   const supabase = createClient()
@@ -15,8 +16,11 @@ export default async function ClientPage({ params }: { params: { id: string } })
 
   if (!user) return null
 
-  const employee = await prisma.employee.findUnique({ where: { userId: user.id } })
-  if (!employee) return null
+  const employee = await prisma.employee.findUnique({
+    where: { userId: user.id },
+    include: { salon: true }
+  })
+  if (!employee || !employee.salon) return null
 
   const [client, stats] = await Promise.all([
     getClientWithHistory(params.id, employee.salonId),
@@ -43,14 +47,17 @@ export default async function ClientPage({ params }: { params: { id: string } })
           <p className="text-muted-foreground text-sm mt-1">{client.phone ?? 'Pas de téléphone'}</p>
         </div>
         <div className="flex flex-col items-end gap-3">
-          <EditClientDialog client={{
-            id: client.id,
-            firstName: client.firstName,
-            lastName: client.lastName,
-            phone: client.phone,
-            whatsappOptOut: client.whatsappOptOut,
-            aiInstructions: client.aiInstructions,
-          }} />
+          <div className="flex gap-2 flex-wrap">
+            <EditClientDialog client={{
+              id: client.id,
+              firstName: client.firstName,
+              lastName: client.lastName,
+              phone: client.phone,
+              whatsappOptOut: client.whatsappOptOut,
+              aiInstructions: client.aiInstructions,
+            }} />
+            <DeleteClientButton clientId={client.id} salonId={employee.salonId} />
+          </div>
           <div className="flex gap-2">
             {client.whatsappId && <Badge variant="outline">WhatsApp</Badge>}
             {client.instagramId && <Badge variant="outline">Instagram</Badge>}
@@ -96,7 +103,7 @@ export default async function ClientPage({ params }: { params: { id: string } })
         {/* Historique RDV */}
         <div className="glass-card rounded-2xl p-6">
           <h2 className="text-lg font-semibold text-foreground mb-4">Historique des rendez-vous</h2>
-          <AppointmentHistory appointments={client.appointments} />
+          <AppointmentHistory appointments={client.appointments} salonName={employee.salon.name} />
         </div>
 
         {/* Fiche Capillaire */}

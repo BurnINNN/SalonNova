@@ -65,27 +65,7 @@ export function HairProfileForm({ clientId, initialData }: HairProfileFormProps)
       </div>
 
       <div className="space-y-2">
-        <Label>Style préféré</Label>
-        <Input placeholder="Ex: Carré plongeant, Boucles naturelles…" {...form.register('preferredStyle')} />
-      </div>
-
-      <div className="space-y-2">
-        <Label>Allergies / Contre-indications</Label>
-        <Input placeholder="Ex: Allergie PPD, sensible aux ammoniaques…" {...form.register('allergies')} />
-      </div>
-
-      <div className="flex items-center gap-3">
-        <input
-          type="checkbox"
-          id="sensitiveScalp"
-          {...form.register('sensitiveScalp')}
-          className="rounded border-border"
-        />
-        <Label htmlFor="sensitiveScalp">Cuir chevelu sensible</Label>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Notes techniques libres</Label>
+        <Label>Description</Label>
         <Textarea
           placeholder="Observations, particularités, recommandations…"
           rows={4}
