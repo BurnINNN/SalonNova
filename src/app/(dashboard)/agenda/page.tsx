@@ -52,30 +52,6 @@ export default async function AgendaPage() {
     }
   }
 
-  // Si pas de data, on génère des faux RDV pour la démo
-  if (appointments.length === 0) {
-    const today = new Date()
-    today.setHours(10, 0, 0, 0)
-    
-    appointments = [
-      {
-        id: '1',
-        client: { firstName: 'Sophie L.' },
-        service: { name: 'Balayage' },
-        startTime: new Date(today),
-        endTime: new Date(today.getTime() + 120 * 60000),
-        status: 'SCHEDULED'
-      },
-      {
-        id: '2',
-        client: { firstName: 'Marc D.' },
-        service: { name: 'Coupe Homme' },
-        startTime: new Date(today.getTime() + 180 * 60000),
-        endTime: new Date(today.getTime() + 210 * 60000),
-        status: 'COMPLETED'
-      }
-    ]
-  }
 
   const EMPLOYEE_COLORS = [
     '#D97757', // Caramel / Warm Terracotta

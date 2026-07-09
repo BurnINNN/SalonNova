@@ -1,0 +1,2 @@
+# Ignorer le microservice de passerelle WhatsApp pour le déploiement Vercel
+whatsapp-gateway/

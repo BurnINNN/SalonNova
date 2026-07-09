@@ -85,40 +85,64 @@ export async function handleEvolutionIncomingMessage(instanceName: string, data:
     const senderPhone = remoteJid.split('@')[0]
     const contactName = data.pushName || 'Client'
 
-    // 1. Trouver le salon via whatsappInstanceName dans les settings
-    let salon = await prisma.salon.findFirst({
+    // 1. Routage dynamique multi-salons pour numéro partagé :
+    // Chercher d'abord si le numéro de téléphone correspond à un client déjà enregistré dans un salon
+    let salon = null;
+    const clientRecord = await prisma.client.findFirst({
       where: {
-        settings: {
-          path: ['whatsappInstanceName'],
-          equals: instanceName,
-        },
+        OR: [
+          { whatsappId: senderPhone },
+          { phone: senderPhone },
+          { phone: '+' + senderPhone },
+        ],
       },
-    })
+      include: {
+        salon: true,
+      },
+    });
 
-    if (!salon) {
-      // Mode développement / onboarding mono-salon
-      const salons = await prisma.salon.findMany()
-      if (salons.length === 1) {
-        salon = salons[0]
-      } else {
-        // Fallback : si plusieurs salons existent (ex: dev), on associe au salon principal BeColor / salon-pro
-        salon = salons.find(s => s.name === 'BeColor' || s.slug === 'salon-pro') || null
-      }
+    if (clientRecord && clientRecord.salon) {
+      salon = clientRecord.salon;
+      console.log(`[WHATSAPP ROUTING] Client reconnu (${senderPhone}). Routage vers le salon : ${salon.name}`);
+    } else {
+      // Si le client n'est pas encore connu, on cherche le salon associé à cette instance par défaut
+      salon = await prisma.salon.findFirst({
+        where: {
+          settings: {
+            path: ['whatsappInstanceName'],
+            equals: instanceName,
+          },
+        },
+      });
 
-      if (salon) {
-        const updatedSettings = {
-          ...(salon.settings as any),
-          whatsappInstanceName: instanceName,
+      if (!salon) {
+        // Mode développement / fallback mono-salon
+        const salons = await prisma.salon.findMany();
+        if (salons.length === 1) {
+          salon = salons[0];
+        } else {
+          salon = salons.find(s => s.name === 'BeColor' || s.slug === 'salon-pro') || null;
         }
-        await prisma.salon.update({
-          where: { id: salon.id },
-          data: { settings: updatedSettings },
-        })
-        console.log(`[WHATSAPP] Association automatique de l'instance ${instanceName} au salon ${salon.name}`)
-      } else {
-        console.log('[WHATSAPP] Aucun salon configuré pour cette instance:', instanceName)
-        return
+
+        if (salon) {
+          const updatedSettings = {
+            ...(salon.settings as any),
+            whatsappInstanceName: instanceName,
+          };
+          await prisma.salon.update({
+            where: { id: salon.id },
+            data: { settings: updatedSettings },
+          });
+          console.log(`[WHATSAPP] Association automatique de l'instance ${instanceName} au salon ${salon.name}`);
+        }
       }
+
+      if (!salon) {
+        console.log('[WHATSAPP] Aucun salon trouvé pour router ce message :', instanceName);
+        return;
+      }
+      
+      console.log(`[WHATSAPP ROUTING] Nouveau client (${senderPhone}). Routage par défaut vers le salon : ${salon.name}`);
     }
 
     // 2. Trouver ou créer le client
